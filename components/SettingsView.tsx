@@ -7,9 +7,9 @@ export const SettingsView = ({ currentQ, onSetQ }: { currentQ: string; onSetQ: (
             <h3 className="f-ui" style={{ marginBottom: '1rem' }}>Download Quality</h3>
             {[
                 { value: 'best', label: 'Best Available', desc: 'Auto-selects highest quality (FLAC > AAC > MP3)' },
-                { value: 'flac', label: 'FLAC Only', desc: 'Strict Mode: Fails if FLAC unavailable' },
-                { value: 'mp3', label: 'MP3', desc: 'Compressed, universal compatibility' },
-                { value: 'm4a', label: 'M4A/AAC', desc: 'Compressed, Apple-friendly' }
+                { value: 'flac', label: 'FLAC Only', desc: 'Lossless' },
+                { value: 'mp3', label: 'MP3', desc: 'Lossy.' },
+                { value: 'm4a', label: 'M4A/AAC', desc: 'Lossy' }
             ].map(opt => (
                 <div key={opt.value}
                     onClick={() => onSetQ(opt.value)}
@@ -22,3 +22,4 @@ export const SettingsView = ({ currentQ, onSetQ }: { currentQ: string; onSetQ: (
         </div>
     </div>
 );
+
