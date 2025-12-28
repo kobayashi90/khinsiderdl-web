@@ -1,5 +1,3 @@
-// --- FILE: components/SearchResultItem.tsx ---
-
 import React, { useState } from 'react';
 import { AutoScrollLabel } from './AutoScrollLabel';
 
@@ -61,4 +59,5 @@ export const SearchResultItem = ({ item, isSelected, onSelect, toTitleCase, defe
             </div>
         </div>
     );
+
 };
