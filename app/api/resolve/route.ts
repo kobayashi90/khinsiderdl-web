@@ -1,14 +1,17 @@
-import { FL_HEADERS, json, BASE_URL } from '../_shared/khinsider';
+import { getKhHeaders, json, BASE_URL, isUrlAllowed } from '../_shared/khinsider';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
+
   if (!url) return json({ error: 'URL required' }, { status: 400 });
+  if (!isUrlAllowed(url)) return json({ error: 'Forbidden' }, { status: 403 });
 
   try {
-    const response = await fetch(url, { headers: FL_HEADERS });
+
+    const response = await fetch(url, { headers: getKhHeaders(url) });
     const html = await response.text();
 
     const regex = /href=["']([^"']+\.(mp3|flac|m4a|ogg))["']/gi;
@@ -31,15 +34,17 @@ export async function GET(request: Request) {
 
     if (result.directUrl) {
       try {
-        const headRes = await fetch(result.directUrl, { method: 'HEAD', headers: FL_HEADERS });
+
+        const headRes = await fetch(result.directUrl, {
+          method: 'HEAD',
+          headers: getKhHeaders(result.directUrl)
+        });
         if (headRes.ok) {
           result.size = headRes.headers.get('content-length');
           result.acceptsRanges = headRes.headers.get('accept-ranges') === 'bytes';
           result.type = headRes.headers.get('content-type');
         }
-      } catch {
-    
-      }
+      } catch { }
     }
 
     return json(result);
@@ -47,5 +52,3 @@ export async function GET(request: Request) {
     return json({ error: e?.message || 'Resolve failed' }, { status: 500 });
   }
 }
-
-

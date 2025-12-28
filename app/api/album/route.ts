@@ -1,14 +1,16 @@
-import { FL_HEADERS, cleanText, cheerioLoad, json, BASE_URL } from '../_shared/khinsider';
+import { getKhHeaders, cleanText, cheerioLoad, json, BASE_URL, isUrlAllowed } from '../_shared/khinsider';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
+
   if (!url) return json({ error: 'URL required' }, { status: 400 });
+  if (!isUrlAllowed(url)) return json({ error: 'Forbidden' }, { status: 403 });
 
   try {
-    const response = await fetch(url, { headers: FL_HEADERS });
+    const response = await fetch(url, { headers: getKhHeaders(url) });
     if (!response.ok) throw new Error(`Khinsider returned ${response.status}`);
 
     const html = await response.text();
@@ -17,20 +19,11 @@ export async function GET(request: Request) {
 
     const meta: any = {
       name: $('h2').first().text().trim(),
-      year: null,
-      developers: null,
-      composers: null,
-      catalogNumber: null,
-      publisher: null,
-      totalFilesize: null,
-      dateAdded: null,
-      platforms: [] as string[],
-      availableFormats: [] as string[],
-      description: null,
-      relatedAlbums: [] as any[],
-      coverUrl: null,
-      albumImages: [] as string[],
-      tracks: [] as any[],
+      year: null, developers: null, composers: null, catalogNumber: null,
+      publisher: null, totalFilesize: null, dateAdded: null,
+      platforms: [] as string[], availableFormats: [] as string[],
+      description: null, relatedAlbums: [] as any[],
+      coverUrl: null, albumImages: [] as string[], imagesThumbs: [] as string[], tracks: [] as any[],
     };
 
     const getMeta = (label: string) => {
@@ -71,65 +64,65 @@ export async function GET(request: Request) {
 
     const relatedHeader = $('h2').filter((i, el) => $(el).text().includes('also viewed'));
     if (relatedHeader.length) {
-      relatedHeader
-        .next('table')
-        .find('td')
-        .each((i, el) => {
-          const a = $(el).find('a').first();
-          const img = $(el).find('img').attr('src');
-          if (a.length) {
-            meta.relatedAlbums.push({
-              title: cleanText(a.text()),
-              url: BASE_URL + (a.attr('href') || ''),
-              thumb: img ? (img.startsWith('http') ? img : BASE_URL + img) : null,
-            });
-          }
-        });
+      relatedHeader.next('table').find('td').each((i, el) => {
+        const a = $(el).find('a').first();
+        const img = $(el).find('img').attr('src');
+        if (a.length) {
+          meta.relatedAlbums.push({
+            title: cleanText(a.text()),
+            url: BASE_URL + (a.attr('href') || ''),
+            thumb: img ? (img.startsWith('http') ? img : BASE_URL + img) : null,
+          });
+        }
+      });
     }
 
     const images: string[] = [];
-    $('.albumImage a').each((i, el) => {
-      let href = $(el).attr('href');
+    const thumbs: string[] = [];
+    $('.albumImage').each((i, el) => {
+      const a = $(el).find('a').first();
+      const img = $(el).find('img').first();
+
+      let href = a.attr('href');
+      let thumbSrc = img.attr('src');
+
       if (href) {
         if (!href.startsWith('http')) href = BASE_URL + href;
         images.push(href);
       }
+
+      if (thumbSrc) {
+        if (!thumbSrc.startsWith('http')) thumbSrc = BASE_URL + thumbSrc;
+        thumbs.push(thumbSrc);
+      }
     });
     meta.albumImages = [...new Set(images)];
+    meta.imagesThumbs = [...new Set(thumbs)];
     meta.coverUrl = meta.albumImages.length > 0 ? meta.albumImages[0] : null;
 
     const headers: string[] = [];
-    $('#songlist tr')
-      .first()
-      .find('th')
-      .each((i, el) => {
-        headers.push((cleanText($(el).text()) || '').toLowerCase());
-      });
+    $('#songlist tr').first().find('th').each((i, el) => {
+      headers.push((cleanText($(el).text()) || '').toLowerCase());
+    });
     meta.availableFormats = headers.filter((h) => !!h && !['#', 'song name', 'play', 'time', 'size'].includes(h));
 
     let trackCounter = 1;
     $('#songlist tr').each((i, el) => {
       if ($(el).attr('id')) return;
-
       const tds = $(el).find('td');
       if (tds.length < 2) return;
 
-      const anchor = $(el)
-        .find('a')
-        .filter((idx, a) => {
-          const h = $(a).attr('href');
-          return typeof h === 'string' && h.includes('/game-soundtracks/album/');
-        })
-        .first();
+      const anchor = $(el).find('a').filter((idx, a) => {
+        const h = $(a).attr('href');
+        return typeof h === 'string' && h.includes('/game-soundtracks/album/');
+      }).first();
 
       if (!anchor.length) return;
 
       const title = cleanText(anchor.text());
       const href = anchor.attr('href') || '';
       const url = BASE_URL + href;
-
       const number = trackCounter++;
-
       let duration: string | null = null;
       let fileSize: string | null = null;
       let bitrate: string | null = null;
@@ -141,14 +134,7 @@ export async function GET(request: Request) {
         else if (/\d+\s*k(bps)?/i.test(txt)) bitrate = txt;
       });
 
-      meta.tracks.push({
-        number,
-        title,
-        duration: duration || '--:--',
-        fileSize: fileSize || '',
-        bitrate,
-        url,
-      });
+      meta.tracks.push({ number, title, duration: duration || '--:--', fileSize: fileSize || '', bitrate, url });
     });
 
     return json(meta);
@@ -156,5 +142,3 @@ export async function GET(request: Request) {
     return json({ error: e?.message || 'Album fetch failed' }, { status: 500 });
   }
 }
-
-

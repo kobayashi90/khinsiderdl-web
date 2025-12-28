@@ -5,7 +5,7 @@ import { MedievalSpinner } from './MedievalSpinner';
 export const Player = ({
     track, isPlaying, duration, onPlayPause, onToggleMode, mode,
     volume, onVolumeChange, playbackRate, onPlaybackRateChange, onNext, onPrev,
-    albumArt, albumTitle, onClose, isLoading, onDownload, onAlbumClick, audioRef,
+    albumArt, thumbnail, albumTitle, onClose, isLoading, onDownload, onAlbumClick, audioRef,
     isMobileFullScreen, setMobileFullScreen, isLiked, onLike
 }: any) => {
 
@@ -19,6 +19,7 @@ export const Player = ({
     const isDraggingRef = useRef(false);
 
 
+
     const formatTime = (seconds: number) => {
         if (!seconds || isNaN(seconds)) return "0:00";
         const m = Math.floor(seconds / 60);
@@ -26,6 +27,11 @@ export const Player = ({
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
+    const handleImgError = (e: any, url: string) => {
+        if (url && !e.target.src.includes('/api/image')) {
+            e.target.src = `/api/image?url=${encodeURIComponent(url)}`;
+        }
+    };
 
     useEffect(() => {
         const audio = audioRef?.current;
@@ -36,15 +42,12 @@ export const Player = ({
             const dur = audio.duration || 1;
             const percent = (time / dur) * 100;
 
-
             const fmt = formatTime(time);
             if (timeCurrRef.current) timeCurrRef.current.innerText = fmt;
             if (mobileTimeCurrRef.current) mobileTimeCurrRef.current.innerText = fmt;
 
-
             if (progressBarRef.current) progressBarRef.current.style.width = `${percent}%`;
             if (mobileProgressBarRef.current) mobileProgressBarRef.current.style.width = `${percent}%`;
-
 
             if (!isDraggingRef.current) {
                 if (sliderRef.current) {
@@ -65,7 +68,6 @@ export const Player = ({
         if (isPlaying) {
             rafRef.current = requestAnimationFrame(updateUI);
         } else {
-
             updateUI();
         }
 
@@ -73,7 +75,6 @@ export const Player = ({
             if (rafRef.current) cancelAnimationFrame(rafRef.current);
         };
     }, [isPlaying, audioRef]);
-
 
     const handleSeekStart = () => {
         isDraggingRef.current = true;
@@ -84,9 +85,7 @@ export const Player = ({
         const dur = duration || 1;
         const percent = (val / dur) * 100;
 
-
         e.target.style.backgroundSize = `${percent}% 100%`;
-
 
         const fmt = formatTime(val);
         if (timeCurrRef.current) timeCurrRef.current.innerText = fmt;
@@ -104,9 +103,8 @@ export const Player = ({
     const handleMobileBarClick = (e: React.MouseEvent) => {
         if (window.innerWidth <= 768) {
             setMobileFullScreen(true);
-        } else {
-            onToggleMode();
         }
+
     };
 
     if (!track) return null;
@@ -115,14 +113,21 @@ export const Player = ({
         <>
             <div className={`mobile-player-overlay ${isMobileFullScreen ? 'active' : ''}`}>
                 <div className="mp-header">
-                    <button className="mp-close-btn" onClick={() => setMobileFullScreen(false)}>
-                        <Icon name="chevronDown" size={32} />
+                    <button className="mp-close-btn mp-toggle-btn" onClick={() => setMobileFullScreen(false)}>
+                        <Icon name="chevronDown" size={24} />
                     </button>
                 </div>
 
                 <div className="mp-art-container">
-                    {albumArt ? (
-                        <img src={`/api/image?url=${encodeURIComponent(albumArt)}`} className="mp-art" />
+                    {(albumArt || thumbnail) ? (
+                        <img
+                            src={albumArt || thumbnail}
+                            referrerPolicy="no-referrer"
+                            className="mp-art"
+                            loading="eager"
+                            // @ts-ignore
+                            onError={(e) => handleImgError(e, albumArt || thumbnail)}
+                        />
                     ) : (
                         <div className="mp-art" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a110a', color: '#8a7a6a' }}>
                             <Icon name="headphones" size={64} />
@@ -142,6 +147,11 @@ export const Player = ({
                 </div>
 
                 <div className="mp-progress">
+                    <div className="mp-progress-top">
+                        <span ref={mobileTimeCurrRef} className="mp-time">0:00</span>
+                        {/* Removed quality tag */}
+                        <span className="mp-time">{formatTime(duration)}</span>
+                    </div>
                     <input
                         ref={mobileSliderRef}
                         type="range"
@@ -154,34 +164,35 @@ export const Player = ({
                         onMouseUp={handleSeekEnd}
                         onTouchStart={handleSeekStart}
                         onTouchEnd={handleSeekEnd}
-                        className="seek-slider"
+                        className="seek-slider mobile-seek"
                         style={{ width: '100%' }}
                     />
-                    <div className="mp-time-labels">
-                        <span ref={mobileTimeCurrRef}>0:00</span>
-                        <span>{formatTime(duration)}</span>
-                    </div>
                 </div>
 
                 <div className="mp-controls">
-                    <button className="mp-btn" onClick={onPrev}><Icon name="skipBack" size={32} /></button>
-                    <button className="mp-btn-main" onClick={onPlayPause}>
-                        {isLoading ? <MedievalSpinner className="spinner-svg small" /> : <Icon name={isPlaying ? "pause" : "play"} size={32} />}
-                    </button>
-                    <button className="mp-btn" onClick={onNext}><Icon name="skipFwd" size={32} /></button>
-                </div>
-
-                {onLike && (
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-                        <button className="mp-btn" onClick={onLike} style={{ color: isLiked ? 'var(--c-crimson)' : '#e2d6b5' }}>
-                            <Icon name={isLiked ? "heartFilled" : "heart"} size={28} />
+                    {onLike && (
+                        <div className="mp-like-absolute">
+                            <button className="mp-btn" onClick={onLike} style={{ color: isLiked ? 'var(--c-crimson)' : '#e2d6b5' }}>
+                                <Icon name={isLiked ? "heartFilled" : "heart"} size={22} />
+                            </button>
+                        </div>
+                    )}
+                    <div className="mp-controls-center">
+                        <button className="mp-btn mp-btn-side" onClick={onPrev}><Icon name="skipBack" size={24} /></button>
+                        <button className="mp-btn-main" onClick={onPlayPause}>
+                            {isLoading ? (
+                                <MedievalSpinner className="spinner-svg small" />
+                            ) : (
+                                <Icon name={isPlaying ? "pause" : "play"} size={28} />
+                            )}
                         </button>
+                        <button className="mp-btn mp-btn-side" onClick={onNext}><Icon name="skipFwd" size={24} /></button>
                     </div>
-                )}
+                </div>
 
                 <div className="mp-sliders">
                     <div className="mp-slider-group">
-                        <Icon name="volume" size={20} />
+                        <Icon name="volume" size={16} />
                         <input
                             type="range"
                             min="0" max="1" step="0.05"
@@ -192,7 +203,7 @@ export const Player = ({
                         />
                     </div>
                     <div className="mp-slider-group">
-                        <span className="speed-label" style={{ width: 'auto' }}>{playbackRate}x</span>
+                        <span className="speed-label" style={{ width: 'auto', fontSize: '0.7em' }}>{playbackRate}x</span>
                         <input
                             type="range"
                             min="0.5" max="2.0" step="0.1"
@@ -216,8 +227,15 @@ export const Player = ({
 
                 <div className="player-content-standard">
                     <div className="p-info">
-                        {albumArt ? (
-                            <img src={`/api/image?url=${encodeURIComponent(albumArt)}`} className="p-art" />
+                        {(thumbnail || albumArt) ? (
+                            <img
+                                src={thumbnail || albumArt}
+                                referrerPolicy="no-referrer"
+                                className="p-art"
+                                loading="eager"
+                                // @ts-ignore
+                                onError={(e) => handleImgError(e, thumbnail || albumArt)}
+                            />
                         ) : (
                             <div className="p-art" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a110a' }}>
                                 <Icon name="headphones" size={24} />
@@ -239,7 +257,11 @@ export const Player = ({
                         <div className="p-controls">
                             <button className="p-btn" onClick={(e) => { e.stopPropagation(); onPrev(); }} title="Previous"><Icon name="skipBack" size={20} /></button>
                             <button className="p-btn p-btn-main" onClick={(e) => { e.stopPropagation(); onPlayPause(); }}>
-                                {isLoading ? <MedievalSpinner className="spinner-svg small" /> : <Icon name={isPlaying ? "pause" : "play"} size={22} />}
+                                {isLoading ? (
+                                    <MedievalSpinner className="spinner-svg small" />
+                                ) : (
+                                    <Icon name={isPlaying ? "pause" : "play"} size={22} />
+                                )}
                             </button>
                             <button className="p-btn" onClick={(e) => { e.stopPropagation(); onNext(); }} title="Next"><Icon name="skipFwd" size={20} /></button>
                         </div>
@@ -315,13 +337,11 @@ export const Player = ({
                         </button>
                     </div>
                 </div>
-                <div className="player-content-mini" onClick={(e) => { if (e.target === e.currentTarget) onToggleMode(); }}>
+                {/* Desktop Toggle Logic handled by player-toggle-btn ONLY now, but this container still renders minimized content */}
+                <div className="player-content-mini">
                     <div className="mini-text">
                         <span style={{ fontWeight: 'bold' }}>{track.title}</span>
                         <span style={{ opacity: 0.7, fontSize: '0.8em', fontFamily: 'Mate SC' }}>
-                            {
-
-                            }
                             Playing
                         </span>
                     </div>

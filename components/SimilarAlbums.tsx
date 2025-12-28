@@ -1,77 +1,57 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { SimilarAlbumCard } from './SimilarAlbumCard';
+import { Icon } from './Icon';
 
-export const SimilarAlbums = ({ albums, onSelect }: { albums: any[]; onSelect: (album: any) => void }) => {
+export const SimilarAlbums = ({ albums, onSelect, deferLoading }: { albums: any[]; onSelect: (album: any) => void; deferLoading?: boolean }) => {
+    const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('carousel');
     const carouselRef = useRef<HTMLDivElement>(null);
-    const scrollRequestRef = useRef<number | null>(null);
-    const scrollSpeedRef = useRef(0);
-    const lastTimeRef = useRef(0);
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!carouselRef.current) return;
-        const rect = carouselRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const width = rect.width;
-        const hotZone = width * 0.2;
-
-
-        if (x < hotZone) {
-
-            const factor = (hotZone - x) / hotZone;
-            scrollSpeedRef.current = -factor * 6;
-        } else if (x > width - hotZone) {
-
-            const factor = (x - (width - hotZone)) / hotZone;
-            scrollSpeedRef.current = factor * 6;
-        } else {
-            scrollSpeedRef.current = 0;
+    const scroll = (direction: 'left' | 'right') => {
+        if (carouselRef.current) {
+            const scrollAmount = 320;
+            carouselRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
         }
     };
 
-    const handleMouseLeave = () => {
-        scrollSpeedRef.current = 0;
-    };
-
-    useEffect(() => {
-        const scroll = (time: number) => {
-            if (lastTimeRef.current === 0) lastTimeRef.current = time;
-
-
-            if (Math.abs(scrollSpeedRef.current) > 0.1 && carouselRef.current) {
-                const maxScroll = carouselRef.current.scrollWidth - carouselRef.current.clientWidth;
-
-                const currentScroll = carouselRef.current.scrollLeft;
-
-                if ((scrollSpeedRef.current > 0 && currentScroll < maxScroll) ||
-                    (scrollSpeedRef.current < 0 && currentScroll > 0)) {
-                    carouselRef.current.scrollLeft += scrollSpeedRef.current;
-                }
-            }
-            lastTimeRef.current = time;
-            scrollRequestRef.current = requestAnimationFrame(scroll);
-        };
-
-        scrollRequestRef.current = requestAnimationFrame(scroll);
-        return () => {
-            if (scrollRequestRef.current) {
-                cancelAnimationFrame(scrollRequestRef.current);
-            }
-        };
-    }, []);
-
     return (
         <div className="related-albums">
-            <h3 className="f-header" style={{ marginTop: '2rem' }}>Similar Albums</h3>
-            <div
-                className="album-carousel"
-                ref={carouselRef}
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-            >
-                {albums.map((alb, i) => (
-                    <SimilarAlbumCard key={i} album={alb} onSelect={onSelect} />
-                ))}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h3 className="f-header" style={{ margin: 0 }}>Similar Albums</h3>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <button
+                        className="btn-mini"
+                        onClick={() => setViewMode(viewMode === 'carousel' ? 'grid' : 'carousel')}
+                        title={viewMode === 'carousel' ? "Switch to Grid" : "Switch to Carousel"}
+                    >
+                        <Icon name={viewMode === 'carousel' ? "grid" : "list"} size={16} />
+                    </button>
+                </div>
             </div>
+
+            {viewMode === 'carousel' ? (
+                <div style={{ position: 'relative', margin: '0 -1rem' }}>
+                    <button className="carousel-nav-btn prev desktop-only" onClick={() => scroll('left')}>
+                        <Icon name="chevronLeft" size={20} />
+                    </button>
+                    <div className="album-carousel" ref={carouselRef}>
+                        {albums.map((alb, i) => (
+                            <SimilarAlbumCard key={i} album={alb} onSelect={onSelect} deferLoading={deferLoading} />
+                        ))}
+                    </div>
+                    <button className="carousel-nav-btn next desktop-only" onClick={() => scroll('right')}>
+                        <Icon name="chevronRight" size={20} />
+                    </button>
+                </div>
+            ) : (
+                <div className="similar-albums-grid">
+                    {albums.map((alb, i) => (
+                        <SimilarAlbumCard key={i} album={alb} onSelect={onSelect} deferLoading={deferLoading} />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

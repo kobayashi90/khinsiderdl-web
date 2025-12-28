@@ -2,6 +2,12 @@ import React from 'react';
 import { Icon } from './Icon';
 
 export const GalleryModal = ({ images, onClose }: { images: string[]; onClose: () => void }) => {
+    const handleImgError = (e: any, url: string) => {
+        if (url && !e.target.src.includes('/api/image')) {
+            e.target.src = `/api/image?url=${encodeURIComponent(url)}`;
+        }
+    };
+
     return (
         <div className="gallery-overlay" onClick={onClose}>
             <div className="gallery-content" onClick={e => e.stopPropagation()}>
@@ -12,7 +18,12 @@ export const GalleryModal = ({ images, onClose }: { images: string[]; onClose: (
                 <div className="gallery-grid">
                     {images.map((img, i) => (
                         <div key={i} className="gallery-item">
-                            <img src={`/api/image?url=${encodeURIComponent(img)}`} alt={`Full cover art ${i + 1}`} />
+                            <img
+                                src={img}
+                                referrerPolicy="no-referrer"
+                                alt={`Full cover art ${i + 1}`}
+                                onError={(e) => handleImgError(e, img)}
+                            />
                             <span>Cover {i + 1}</span>
                         </div>
                     ))}

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Script from 'next/script';
 import "./globals.css";
 
@@ -31,7 +31,6 @@ export default function HomePage() {
     const [galleryOpen, setGalleryOpen] = useState(false);
     const [latestUpdates, setLatestUpdates] = useState<any[]>([]);
 
-
     const [trackProgress, setTrackProgress] = useState<Record<number, number>>({});
     const [albumProgress, setAlbumProgress] = useState<any>(null);
     const [albumIsQueued, setAlbumIsQueued] = useState(false);
@@ -48,7 +47,6 @@ export default function HomePage() {
     const [queue, setQueue] = useState<any[]>([]);
     const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
     const [isMobileFullScreen, setMobileFullScreen] = useState(false);
-
 
     const [likedTracks, setLikedTracks] = useState<any[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -268,8 +266,6 @@ export default function HomePage() {
         dlManager.setQuality(q);
     };
 
-
-
     const addToQueue = useCallback((track: any) => {
         dlManager.addTrackToQueue(track, selectedAlbum);
     }, [selectedAlbum]);
@@ -278,14 +274,12 @@ export default function HomePage() {
         dlManager.addAlbumToQueue(selectedAlbum);
     }, [selectedAlbum]);
 
-
     const handleTrackLike = useCallback((track: any) => {
         const albumContext = selectedAlbum ? {
             name: selectedAlbum.name,
             url: selectedUrl,
             albumImages: selectedAlbum.albumImages
         } : undefined;
-
 
         const albumName = albumContext?.name || track.albumName || "Unknown Album";
         const albumUrl = albumContext?.url || track.albumUrl || "";
@@ -299,7 +293,6 @@ export default function HomePage() {
         });
     }, [selectedAlbum, selectedUrl]);
 
-
     const toggleLike = useCallback((track: any) => {
         setLikedTracks(prev => {
             const exists = prev.find(t => t.url === track.url);
@@ -312,7 +305,6 @@ export default function HomePage() {
     const isLiked = useCallback((trackUrl: string) => {
         return likedTracks.some(t => t.url === trackUrl);
     }, [likedTracks]);
-
 
     const toggleLikeAlbum = useCallback(() => {
         if (!selectedAlbum) return;
@@ -348,7 +340,11 @@ export default function HomePage() {
             return;
         }
         const albumName = track.albumName || (selectedAlbum ? selectedAlbum.name : "");
-        const albumArt = track.albumArt || (selectedAlbum ? selectedAlbum.albumImages?.[0] : "");
+
+        // Resolve images separately
+        const highResArt = track.albumArt || (selectedAlbum ? selectedAlbum.albumImages?.[0] : "") || "";
+        const lowResArt = track.thumbnail || (selectedAlbum ? selectedAlbum.imagesThumbs?.[0] : "") || highResArt || "";
+
         const albumUrl = selectedUrl || track.albumUrl || "";
 
         if (currentTrack && currentTrack.title === track.title && currentTrack.albumName === albumName) {
@@ -363,16 +359,22 @@ export default function HomePage() {
 
         let newQueue = [];
         if (albumTracks.length > 0) {
-            newQueue = albumTracks.map(t => ({ ...t, albumName, albumArt, albumUrl: t.albumUrl || albumUrl }));
+            newQueue = albumTracks.map(t => ({
+                ...t,
+                albumName,
+                albumArt: highResArt,
+                thumbnail: lowResArt,
+                albumUrl: t.albumUrl || albumUrl
+            }));
         } else {
-            newQueue = [{ ...track, albumName, albumArt, albumUrl }];
+            newQueue = [{ ...track, albumName, albumArt: highResArt, thumbnail: lowResArt, albumUrl }];
         }
 
         setQueue(newQueue);
         const idx = newQueue.findIndex(t => t.title === track.title);
         setCurrentTrackIndex(idx);
 
-        const trackData = { ...track, albumName, albumArt, albumUrl };
+        const trackData = { ...track, albumName, albumArt: highResArt, thumbnail: lowResArt, albumUrl };
         setCurrentTrack(trackData);
         setIsPlaying(true);
         setAudioLoadingDebounced(true);
@@ -530,7 +532,6 @@ export default function HomePage() {
         event.target.value = '';
     };
 
-    // Helper to group liked tracks by album
     const getGroupedLikes = () => {
         const groups: Record<string, { albumName: string, albumUrl: string, albumArt: string, tracks: any[] }> = {};
         likedTracks.forEach(track => {
@@ -551,7 +552,6 @@ export default function HomePage() {
         return Object.values(groups);
     };
 
-
     if (!isClient) {
         return (
             <div className="app-root">
@@ -563,6 +563,9 @@ export default function HomePage() {
             </div>
         );
     }
+
+    const hasPlayer = !!currentTrack;
+    const isMobileContentVisible = !!selectedUrl || view !== 'home';
 
     return (
         <>
@@ -583,7 +586,7 @@ export default function HomePage() {
                 onLoadStart={() => setAudioLoadingDebounced(true)}
                 {...({ referrerPolicy: "no-referrer" } as any)}
             />
-            <div className={`app-root ${selectedUrl ? 'mobile-content-view' : 'mobile-index-view'}`}>
+            <div className={`app-root ${isMobileContentVisible ? 'mobile-content-view' : 'mobile-index-view'} ${hasPlayer ? 'has-player' : ''}`}>
                 <div className="grimoire-container">
                     <div className="panel-nav">
                         <button className={`nav-item ${view === 'home' ? 'active' : ''}`} onClick={() => setView('home')}>
@@ -636,6 +639,7 @@ export default function HomePage() {
                                     isSelected={selectedUrl === item.url}
                                     onSelect={selectAlbum}
                                     toTitleCase={toTitleCase}
+                                    deferLoading={isAudioLoading}
                                 />
                             )) : (
                                 <div style={{ padding: '2rem', textAlign: 'center', fontStyle: 'italic', opacity: 0.4 }}>No entries found.</div>
@@ -648,208 +652,235 @@ export default function HomePage() {
                         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '3.75rem', height: '3.75rem', borderBottom: '3px solid #2a1f1b', borderLeft: '3px solid #2a1f1b', opacity: 0.1, borderRadius: '0 0 0 4px', zIndex: 5, pointerEvents: 'none' }}></div>
                         <div style={{ position: 'absolute', bottom: 0, right: 0, width: '3.75rem', height: '3.75rem', borderBottom: '3px solid #2a1f1b', borderRight: '3px solid #2a1f1b', opacity: 0.1, borderRadius: '0 0 4px 0', zIndex: 5, pointerEvents: 'none' }}></div>
 
-                        {loading ? (
-                            <LoadingIndicator />
-                        ) : view === 'settings' ? (
-                            <SettingsView currentQ={qualityPref} onSetQ={updateQuality} />
-                        ) : view === 'queue' ? (
-                            <QueueView />
-                        ) : view === 'liked' ? (
-                            <div className="content-inner">
-                                <div className="liked-view-header">
-                                    <h1 className="f-header" style={{ fontSize: '2.5rem', marginBottom: '0.5rem', color: '#c5a059' }}>Liked Songs</h1>
-                                    <div className="f-ui" style={{ color: '#8a6a38', marginBottom: '2rem', fontSize: '0.9rem' }}>
-                                        {likedTracks.length} Saved Tracks • Stored Locally
-                                    </div>
-                                    <div className="btn-action-group">
-                                        <button className="btn-main" onClick={exportLikes}>
-                                            <Icon name="download" size={18} /> Export Likes
-                                        </button>
-                                        <button className="btn-main" onClick={() => fileInputRef.current?.click()}>
-                                            <Icon name="list" size={18} /> Import Likes
-                                        </button>
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            style={{ display: 'none' }}
-                                            accept=".json"
-                                            onChange={importLikes}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="liked-list">
-                                    {likedTracks.length === 0 ? (
-                                        <div className="empty-state">
-                                            <Icon name="heart" size={48} />
-                                            <p style={{ marginTop: '1rem', fontFamily: 'Mate SC' }}>No liked songs yet.</p>
+                        <div className="content-stack">
+                            <div style={{ display: view === 'home' ? 'block' : 'none', height: '100%' }}>
+                                {loading ? (
+                                    <LoadingIndicator />
+                                ) : selectedAlbum ? (
+                                    <div className="content-inner">
+                                        <div style={{ position: 'sticky', top: 0, zIndex: 10, paddingBottom: '1rem', pointerEvents: 'none' }}>
+                                            <button className="btn-back-floating" onClick={handleBack}>
+                                                <Icon name="arrowLeft" size={16} />
+                                                Back
+                                            </button>
                                         </div>
-                                    ) : (
-                                        getGroupedLikes().map((group, gIdx) => (
-                                            <div key={gIdx} className="liked-album-group">
-                                                <div className="liked-album-header" onClick={() => handleAlbumClick(group.albumUrl)} style={{ cursor: 'pointer' }}>
-                                                    {group.albumArt ? (
-                                                        <img src={`/api/image?url=${encodeURIComponent(group.albumArt)}`} className="thumb" />
-                                                    ) : (
-                                                        <div className="thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <Icon name="headphones" size={24} />
+                                        <div className="meta-header">
+                                            <div className="header-info">
+                                                <h1 className="f-header album-title">{selectedAlbum.name}</h1>
+                                                {selectedAlbum.composers && <div className="f-ui album-artist">{selectedAlbum.composers}</div>}
+                                                <div className="album-metadata-grid">
+                                                    {selectedAlbum.availableFormats && selectedAlbum.availableFormats.filter((fmt: string) => fmt !== 'CD').map((fmt: string) => (
+                                                        <span key={fmt} className={`metadata-tag format-${fmt}`}>{fmt.toUpperCase()}</span>
+                                                    ))}
+                                                    {selectedAlbum.year && <span className="metadata-tag">{selectedAlbum.year}</span>}
+                                                    {selectedAlbum.publisher && <span className="metadata-tag">{selectedAlbum.publisher}</span>}
+                                                    {selectedAlbum.platforms && selectedAlbum.platforms.length > 0 &&
+                                                        <span className="metadata-tag">{selectedAlbum.platforms.join(', ')}</span>}
+                                                    {selectedAlbum.totalFilesize && <span className="metadata-tag">{selectedAlbum.totalFilesize}</span>}
+                                                </div>
+                                                {selectedAlbum.description && (
+                                                    <div className="f-body description-box medieval-scroll">
+                                                        {selectedAlbum.description}
+                                                    </div>
+                                                )}
+                                                <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                                                    <button
+                                                        onClick={downloadFullAlbum}
+                                                        className="btn-main"
+                                                        disabled={!!albumProgress || albumIsQueued}
+                                                        style={{ position: 'relative', overflow: 'hidden' }}
+                                                    >
+                                                        {albumProgress && (
+                                                            <div style={{
+                                                                position: 'absolute', top: 0, left: 0, bottom: 0,
+                                                                width: `${albumProgress.progress}%`,
+                                                                background: 'rgba(197, 160, 89, 0.3)',
+                                                                transition: 'width 0.2s',
+                                                                zIndex: 0
+                                                            }}></div>
+                                                        )}
+                                                        <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                            {albumProgress ? (
+                                                                <>
+                                                                    <Icon name="download" size={18} />
+                                                                    {`Downloading... ${Math.round(albumProgress.progress)}%`}
+                                                                </>
+                                                            ) : albumIsQueued ? (
+                                                                <>
+                                                                    <Icon name="list" size={18} />
+                                                                    Queued
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Icon name="download" size={18} />
+                                                                    Download Album
+                                                                </>
+                                                            )}
+                                                        </span>
+                                                    </button>
+
+                                                    <button
+                                                        className="btn-main"
+                                                        onClick={toggleLikeAlbum}
+                                                        title="Like/Unlike Whole Album"
+                                                    >
+                                                        <Icon name={selectedAlbum.tracks.every((t: any) => isLiked(t.url)) ? "heartFilled" : "heart"} size={18} />
+                                                        {selectedAlbum.tracks.every((t: any) => isLiked(t.url)) ? "Liked Album" : "Like Album"}
+                                                    </button>
+
+                                                    <span style={{ fontFamily: 'Mate SC', color: '#8a6a38', fontSize: '1rem' }}>
+                                                        • {selectedAlbum.tracks.length} Tracks
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <AlbumArtStack
+                                                images={selectedAlbum.albumImages}
+                                                onClick={() => setGalleryOpen(true)}
+                                                deferLoading={isAudioLoading}
+                                            />
+                                        </div>
+                                        <div className="track-list medieval-scroll">
+                                            {selectedAlbum.tracks.map((t: any, i: number) => {
+                                                const isCurrent = currentTrack && currentTrack.title === t.title && currentTrack.albumName === selectedAlbum.name;
+                                                return (
+                                                    <TrackRow
+                                                        key={i}
+                                                        t={t}
+                                                        i={i}
+                                                        isCurrent={isCurrent}
+                                                        isPlaying={isPlaying}
+                                                        trackProgress={trackProgress[i]}
+                                                        playTrack={playTrack}
+                                                        addToQueue={addToQueue}
+                                                        selectedAlbumTracks={selectedAlbum.tracks}
+                                                        isLiked={isLiked(t.url)}
+                                                        onLike={handleTrackLike}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                        {selectedAlbum.relatedAlbums && selectedAlbum.relatedAlbums.length > 0 &&
+                                            <SimilarAlbums
+                                                albums={selectedAlbum.relatedAlbums}
+                                                onSelect={selectAlbum}
+                                                deferLoading={isAudioLoading}
+                                            />
+                                        }
+                                    </div>
+                                ) : (
+                                    <div className="latest-updates-view" style={{ padding: '2rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(138, 106, 56, 0.3)', paddingBottom: '1rem' }}>
+                                            <Icon name="book" size={32} />
+                                            <h2 className="f-header" style={{ margin: 0, fontSize: '2rem', color: '#c5a059' }}>Latest Arrivals</h2>
+                                        </div>
+                                        <div className="rss-grid">
+                                            {latestUpdates.length === 0 ? (
+                                                <div style={{ textAlign: 'center', opacity: 0.5, fontStyle: 'italic' }}>Loading latest releases...</div>
+                                            ) : (
+                                                latestUpdates.map((item, i) => (
+                                                    <div key={i} className="rss-item" onClick={() => selectAlbum({ url: item.url })}>
+                                                        <div className="rss-date">{new Date(item.date).toLocaleDateString()}</div>
+                                                        <div className="rss-title">{item.title}</div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ display: view === 'settings' ? 'block' : 'none', height: '100%' }}>
+                                <SettingsView currentQ={qualityPref} onSetQ={updateQuality} />
+                            </div>
+
+                            <div style={{ display: view === 'queue' ? 'block' : 'none', height: '100%' }}>
+                                <QueueView />
+                            </div>
+
+                            <div style={{ display: view === 'liked' ? 'block' : 'none', height: '100%' }}>
+                                <div className="content-inner">
+                                    <div className="liked-view-header">
+                                        <h1 className="f-header" style={{ fontSize: '2.5rem', marginBottom: '0.5rem', color: '#c5a059' }}>Liked Songs</h1>
+                                        <div className="f-ui" style={{ color: '#8a6a38', marginBottom: '2rem', fontSize: '0.9rem' }}>
+                                            {likedTracks.length} Saved Tracks • Stored Locally
+                                        </div>
+                                        <div className="btn-action-group">
+                                            <button className="btn-main" onClick={exportLikes}>
+                                                <Icon name="download" size={18} /> Export Likes
+                                            </button>
+                                            <button className="btn-main" onClick={() => fileInputRef.current?.click()}>
+                                                <Icon name="list" size={18} /> Import Likes
+                                            </button>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                style={{ display: 'none' }}
+                                                accept=".json"
+                                                onChange={importLikes}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="liked-list">
+                                        {likedTracks.length === 0 ? (
+                                            <div className="empty-state">
+                                                <Icon name="heart" size={48} />
+                                                <p style={{ marginTop: '1rem', fontFamily: 'Mate SC' }}>No liked songs yet.</p>
+                                            </div>
+                                        ) : (
+                                            getGroupedLikes().map((group, gIdx) => (
+                                                <div key={gIdx} className="liked-album-group">
+                                                    <div className="liked-album-header" onClick={() => handleAlbumClick(group.albumUrl)} style={{ cursor: 'pointer' }}>
+                                                        {group.albumArt ? (
+                                                            <img
+                                                                src={isAudioLoading ? undefined : group.albumArt}
+                                                                referrerPolicy="no-referrer"
+                                                                className="thumb"
+                                                                loading="lazy"
+                                                                // @ts-ignore
+                                                                fetchPriority="low"
+                                                                onError={(e: any) => {
+                                                                    if (group.albumArt && !e.target.src.includes('/api/image')) {
+                                                                        e.target.src = `/api/image?url=${encodeURIComponent(group.albumArt)}`;
+                                                                    }
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <Icon name="headphones" size={24} />
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                            <div className="f-header" style={{ fontSize: '1.2rem', color: '#c5a059' }}>{group.albumName}</div>
+                                                            <div className="f-ui" style={{ fontSize: '0.8rem', opacity: 0.7 }}>{group.tracks.length} tracks</div>
                                                         </div>
-                                                    )}
-                                                    <div>
-                                                        <div className="f-header" style={{ fontSize: '1.2rem', color: '#c5a059' }}>{group.albumName}</div>
-                                                        <div className="f-ui" style={{ fontSize: '0.8rem', opacity: 0.7 }}>{group.tracks.length} tracks</div>
+                                                    </div>
+                                                    <div className="track-list" style={{ maxHeight: 'none', marginBottom: '2rem', paddingBottom: '0', background: 'none', border: 'none' }}>
+                                                        {group.tracks.map((t: any, i: number) => {
+                                                            const isCurrent = currentTrack && currentTrack.title === t.title && currentTrack.albumName === group.albumName;
+                                                            return (
+                                                                <TrackRow
+                                                                    key={i}
+                                                                    t={t}
+                                                                    i={i}
+                                                                    isCurrent={isCurrent}
+                                                                    isPlaying={isPlaying}
+                                                                    trackProgress={0}
+                                                                    playTrack={playTrack}
+                                                                    addToQueue={addToQueue}
+                                                                    selectedAlbumTracks={group.tracks}
+                                                                    isLiked={isLiked(t.url)}
+                                                                    onLike={handleTrackLike}
+                                                                />
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
-                                                <div className="track-list" style={{ maxHeight: 'none', marginBottom: '2rem', paddingBottom: '0', background: 'none', border: 'none' }}>
-                                                    {group.tracks.map((t: any, i: number) => {
-                                                        const isCurrent = currentTrack && currentTrack.title === t.title && currentTrack.albumName === group.albumName;
-                                                        return (
-                                                            <TrackRow
-                                                                key={i}
-                                                                t={t}
-                                                                i={i}
-                                                                isCurrent={isCurrent}
-                                                                isPlaying={isPlaying}
-                                                                trackProgress={0}
-                                                                playTrack={playTrack}
-                                                                addToQueue={addToQueue}
-                                                                selectedAlbumTracks={group.tracks}
-                                                                isLiked={isLiked(t.url)}
-                                                                onLike={handleTrackLike}
-                                                            />
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        ) : selectedAlbum ? (
-                            <div className="content-inner">
-                                <div style={{ position: 'sticky', top: 0, zIndex: 10, paddingBottom: '1rem', pointerEvents: 'none' }}>
-                                    <button className="btn-back-floating" onClick={handleBack}>
-                                        <Icon name="arrowLeft" size={16} />
-                                        Back
-                                    </button>
-                                </div>
-                                <div className="meta-header">
-                                    <div className="header-info">
-                                        <h1 className="f-header album-title">{selectedAlbum.name}</h1>
-                                        {selectedAlbum.composers && <div className="f-ui album-artist">{selectedAlbum.composers}</div>}
-                                        <div className="album-metadata-grid">
-                                            {selectedAlbum.availableFormats && selectedAlbum.availableFormats.filter((fmt: string) => fmt !== 'CD').map((fmt: string) => (
-                                                <span key={fmt} className={`metadata-tag format-${fmt}`}>{fmt.toUpperCase()}</span>
-                                            ))}
-                                            {selectedAlbum.year && <span className="metadata-tag">{selectedAlbum.year}</span>}
-                                            {selectedAlbum.publisher && <span className="metadata-tag">{selectedAlbum.publisher}</span>}
-                                            {selectedAlbum.platforms && selectedAlbum.platforms.length > 0 &&
-                                                <span className="metadata-tag">{selectedAlbum.platforms.join(', ')}</span>}
-                                            {selectedAlbum.totalFilesize && <span className="metadata-tag">{selectedAlbum.totalFilesize}</span>}
-                                        </div>
-                                        {selectedAlbum.description && (
-                                            <div className="f-body description-box medieval-scroll">
-                                                {selectedAlbum.description}
-                                            </div>
+                                            ))
                                         )}
-                                        <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                                            <button
-                                                onClick={downloadFullAlbum}
-                                                className="btn-main"
-                                                disabled={!!albumProgress || albumIsQueued}
-                                                style={{ position: 'relative', overflow: 'hidden' }}
-                                            >
-                                                {albumProgress && (
-                                                    <div style={{
-                                                        position: 'absolute', top: 0, left: 0, bottom: 0,
-                                                        width: `${albumProgress.progress}%`,
-                                                        background: 'rgba(197, 160, 89, 0.3)',
-                                                        transition: 'width 0.2s',
-                                                        zIndex: 0
-                                                    }}></div>
-                                                )}
-                                                <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    {albumProgress ? (
-                                                        <>
-                                                            <Icon name="download" size={18} />
-                                                            {`Downloading... ${Math.round(albumProgress.progress)}%`}
-                                                        </>
-                                                    ) : albumIsQueued ? (
-                                                        <>
-                                                            <Icon name="list" size={18} />
-                                                            Queued
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Icon name="download" size={18} />
-                                                            Download Album
-                                                        </>
-                                                    )}
-                                                </span>
-                                            </button>
-
-                                            <button
-                                                className="btn-main"
-                                                onClick={toggleLikeAlbum}
-                                                title="Like/Unlike Whole Album"
-                                            >
-                                                <Icon name={selectedAlbum.tracks.every((t: any) => isLiked(t.url)) ? "heartFilled" : "heart"} size={18} />
-                                                {selectedAlbum.tracks.every((t: any) => isLiked(t.url)) ? "Liked Album" : "Like Album"}
-                                            </button>
-
-                                            <span style={{ fontFamily: 'Mate SC', color: '#8a6a38', fontSize: '1rem' }}>
-                                                • {selectedAlbum.tracks.length} Tracks
-                                            </span>
-                                        </div>
                                     </div>
-                                    <AlbumArtStack
-                                        images={selectedAlbum.albumImages}
-                                        onClick={() => setGalleryOpen(true)}
-                                    />
-                                </div>
-                                <div className="track-list medieval-scroll">
-                                    {selectedAlbum.tracks.map((t: any, i: number) => {
-                                        const isCurrent = currentTrack && currentTrack.title === t.title && currentTrack.albumName === selectedAlbum.name;
-                                        return (
-                                            <TrackRow
-                                                key={i}
-                                                t={t}
-                                                i={i}
-                                                isCurrent={isCurrent}
-                                                isPlaying={isPlaying}
-                                                trackProgress={trackProgress[i]}
-                                                playTrack={playTrack}
-                                                addToQueue={addToQueue}
-                                                selectedAlbumTracks={selectedAlbum.tracks}
-                                                isLiked={isLiked(t.url)}
-                                                onLike={handleTrackLike}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                                {selectedAlbum.relatedAlbums && selectedAlbum.relatedAlbums.length > 0 &&
-                                    <SimilarAlbums albums={selectedAlbum.relatedAlbums} onSelect={selectAlbum} />
-                                }
-                            </div>
-                        ) : (
-                            <div className="latest-updates-view" style={{ padding: '2rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(138, 106, 56, 0.3)', paddingBottom: '1rem' }}>
-                                    <Icon name="book" size={32} />
-                                    <h2 className="f-header" style={{ margin: 0, fontSize: '2rem', color: '#c5a059' }}>Latest Arrivals</h2>
-                                </div>
-                                <div className="rss-grid">
-                                    {latestUpdates.length === 0 ? (
-                                        <div style={{ textAlign: 'center', opacity: 0.5, fontStyle: 'italic' }}>Loading latest releases...</div>
-                                    ) : (
-                                        latestUpdates.map((item, i) => (
-                                            <div key={i} className="rss-item" onClick={() => selectAlbum({ url: item.url })}>
-                                                <div className="rss-date">{new Date(item.date).toLocaleDateString()}</div>
-                                                <div className="rss-title">{item.title}</div>
-                                            </div>
-                                        ))
-                                    )}
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
                 <Player
@@ -866,6 +897,7 @@ export default function HomePage() {
                     onNext={playNext}
                     onPrev={playPrev}
                     albumArt={currentTrack?.albumArt}
+                    thumbnail={currentTrack?.thumbnail}
                     albumTitle={currentTrack?.albumName}
                     onClose={handleClosePlayer}
                     isLoading={isAudioLoading}

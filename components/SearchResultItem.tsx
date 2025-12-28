@@ -1,8 +1,32 @@
+// --- FILE: components/SearchResultItem.tsx ---
+
 import React, { useState } from 'react';
 import { AutoScrollLabel } from './AutoScrollLabel';
 
-export const SearchResultItem = ({ item, isSelected, onSelect, toTitleCase }: any) => {
+export const SearchResultItem = ({ item, isSelected, onSelect, toTitleCase, deferLoading }: any) => {
     const [isHovered, setIsHovered] = useState(false);
+    const [displayedIcon, setDisplayedIcon] = useState(item.icon);
+
+    React.useEffect(() => {
+        if (!deferLoading && item.icon !== displayedIcon) {
+            setDisplayedIcon(item.icon);
+        }
+    }, [item.icon, deferLoading, displayedIcon]);
+
+    React.useEffect(() => {
+        if (!deferLoading && !displayedIcon && item.icon) {
+            setDisplayedIcon(item.icon);
+        }
+    }, [item.icon]);
+
+    const handleImgError = (e: any) => {
+        if (displayedIcon && !e.target.src.includes('/api/image')) {
+            e.target.src = `/api/image?url=${encodeURIComponent(displayedIcon)}`;
+        } else {
+            e.target.style.display = 'none';
+        }
+    };
+
     return (
         <div
             onClick={() => onSelect(item)}
@@ -10,12 +34,16 @@ export const SearchResultItem = ({ item, isSelected, onSelect, toTitleCase }: an
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
-            {item.icon && (
+            {displayedIcon && (
                 <img
-                    src={`/api/image?url=${encodeURIComponent(item.icon)}`}
+                    src={displayedIcon}
+                    referrerPolicy="no-referrer"
                     className="thumb"
-                    onError={(e: any) => e.target.style.display = 'none'}
+                    onError={handleImgError}
                     alt=""
+                    loading="lazy"
+                    // @ts-ignore
+                    fetchPriority="low"
                 />
             )}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

@@ -1,16 +1,21 @@
-import { BASE_URL, FL_HEADERS, cleanText, cheerioLoad, json } from '../_shared/khinsider';
+import { BASE_URL, getKhHeaders, cleanText, cheerioLoad, json } from '../_shared/khinsider';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q');
-  if (!q) return json({ error: 'Query required' }, { status: 400 });
+
+  if (!q || q.length > 100) {
+    return json({ error: 'Query required (max 100 chars)' }, { status: 400 });
+  }
 
   try {
     const term = q.replace('series:', '');
     const targetUrl = `${BASE_URL}/search?search=${encodeURIComponent(term)}&albumListSize=compact`;
-    const response = await fetch(targetUrl, { headers: FL_HEADERS });
+
+    // Use dynamic headers
+    const response = await fetch(targetUrl, { headers: getKhHeaders(targetUrl) });
     if (!response.ok) throw new Error(`Khinsider returned ${response.status}`);
 
     const html = await response.text();
@@ -52,8 +57,7 @@ export async function GET(request: Request) {
 
     return json(results);
   } catch (e: any) {
-    return json({ error: e?.message || 'Search failed' }, { status: 500 });
+    console.error("Search Error:", e);
+    return json({ error: 'Search failed' }, { status: 500 });
   }
 }
-
-
