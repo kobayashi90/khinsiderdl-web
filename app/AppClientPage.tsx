@@ -75,7 +75,7 @@ const PlaylistsView = dynamic(() => import('../components/PlaylistsView').then((
     ),
 });
 
-const DISCORD_URL = "https://discord.gg/your-invite-link";
+const DISCORD_URL = "https://discord.gg/yuvnx7FS89";
 const LIKED_ALBUM_META_CACHE_KEY = 'kh_liked_album_meta_cache_v3';
 const LEGACY_LIKED_ALBUM_META_CACHE_KEY = 'kh_liked_album_meta_cache_v2';
 
@@ -856,8 +856,17 @@ export default function HomePage() {
     const [likedAlbumMetaCache, setLikedAlbumMetaCache] = useState<Record<string, any | null>>({});
     const [likedAlbumMetaLoading, setLikedAlbumMetaLoading] = useState<Record<string, boolean>>({});
     const [likedAlbumMetaError, setLikedAlbumMetaError] = useState<Record<string, string>>({});
-    const [playlists, setPlaylists] = useState<Playlist[]>([]);
-    const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+    const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+        if (typeof window === 'undefined') return [];
+        try { return loadPlaylistsFromStorage(window.localStorage); } catch { return []; }
+    });
+    const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        try {
+            const saved = loadPlaylistsFromStorage(window.localStorage);
+            return saved.length > 0 ? saved[0].id : null;
+        } catch { return null; }
+    });
     const [playlistRouteIdentifier, setPlaylistRouteIdentifier] = useState<string | null>(null);
     const [sharedPlaylistMode, setSharedPlaylistMode] = useState<SharedPlaylistMode>('none');
     const [sharedPlaylistStatus, setSharedPlaylistStatus] = useState<SharedPlaylistStatus>('idle');
@@ -1242,12 +1251,6 @@ export default function HomePage() {
             const savedRepeat = localStorage.getItem('playerRepeatEnabled');
             if (savedRepeat === '1' || savedRepeat === 'true') {
                 setIsRepeatEnabled(true);
-            }
-
-            const savedPlaylists = loadPlaylistsFromStorage(window.localStorage);
-            if (savedPlaylists.length > 0) {
-                setPlaylists(savedPlaylists);
-                setSelectedPlaylistId(savedPlaylists[0].id);
             }
 
             const savedLikes = readLikedTracksFromStorage(window.localStorage);
@@ -3435,7 +3438,7 @@ export default function HomePage() {
                     ? 'Manual Queue'
                     : nextTrack?.queueSource === 'playlist'
                         ? (nextTrack?.playlistName ? `Playlist: ${nextTrack.playlistName}` : playbackSourceLabelRef.current)
-                    : (nextTrack?.albumName ? `From ${nextTrack.albumName}` : playbackSourceLabelRef.current);
+                        : (nextTrack?.albumName ? `From ${nextTrack.albumName}` : playbackSourceLabelRef.current);
             playbackSourceLabelRef.current = nextLabel;
             setPlaybackSourceLabel(nextLabel);
             void playTrackWithResolution(nextTrack);
@@ -3497,7 +3500,7 @@ export default function HomePage() {
                 ? 'Manual Queue'
                 : prevTrack?.queueSource === 'playlist'
                     ? (prevTrack?.playlistName ? `Playlist: ${prevTrack.playlistName}` : playbackSourceLabelRef.current)
-                : (prevTrack?.albumName ? `From ${prevTrack.albumName}` : playbackSourceLabelRef.current);
+                    : (prevTrack?.albumName ? `From ${prevTrack.albumName}` : playbackSourceLabelRef.current);
         playbackSourceLabelRef.current = prevLabel;
         setPlaybackSourceLabel(prevLabel);
         void playTrackWithResolution(prevTrack);
@@ -3710,7 +3713,7 @@ export default function HomePage() {
                 ? 'Manual Queue'
                 : track?.queueSource === 'playlist'
                     ? (track?.playlistName ? `Playlist: ${track.playlistName}` : playbackSourceLabel)
-                : (track?.albumName ? `From ${track.albumName}` : playbackSourceLabel)
+                    : (track?.albumName ? `From ${track.albumName}` : playbackSourceLabel)
         );
         void playTrackInternal(track);
     }, [playTrackInternal, playbackSourceLabel]);
@@ -3978,10 +3981,10 @@ export default function HomePage() {
             const key = normalizedAlbumId
                 ? `id:${normalizedAlbumId}`
                 : albumSlug
-                ? `slug:${albumSlug}`
-                : (normalizedAlbumUrl || normalizedInferredAlbumUrl)
-                    ? `url:${normalizedAlbumUrl || normalizedInferredAlbumUrl}`
-                : `fallback:${normalizedName}|${fallbackFingerprint}`;
+                    ? `slug:${albumSlug}`
+                    : (normalizedAlbumUrl || normalizedInferredAlbumUrl)
+                        ? `url:${normalizedAlbumUrl || normalizedInferredAlbumUrl}`
+                        : `fallback:${normalizedName}|${fallbackFingerprint}`;
 
             if (!groups[key]) {
                 groups[key] = {
@@ -5904,1183 +5907,1183 @@ export default function HomePage() {
                     ) : null}
                     <div className="app-shell-main">
                         <div ref={panelContentRef} className="panel-content medieval-scroll">
-                        <div className="panel-corner panel-corner-top-left" aria-hidden="true"></div>
-                        <div className="panel-corner panel-corner-top-right" aria-hidden="true"></div>
-                        <div className="panel-corner panel-corner-bottom-left" aria-hidden="true"></div>
-                        <div className="panel-corner panel-corner-bottom-right" aria-hidden="true"></div>
+                            <div className="panel-corner panel-corner-top-left" aria-hidden="true"></div>
+                            <div className="panel-corner panel-corner-top-right" aria-hidden="true"></div>
+                            <div className="panel-corner panel-corner-bottom-left" aria-hidden="true"></div>
+                            <div className="panel-corner panel-corner-bottom-right" aria-hidden="true"></div>
 
-                        <div className="content-stack">
-                            {view === 'home' && (
-                            <ViewPanel>
-                                {selectedAlbum ? (
-                                    <div className="content-inner">
-                                        <div className="album-back-floating-wrap">
-                                            <button className="btn-back-floating" onClick={handleBack}>
-                                                <Icon name="arrowLeft" size={16} />
-                                                Back
-                                            </button>
-                                        </div>
-                                        <div className="meta-header">
-                                            <div
-                                                className="album-hero-art-wrap"
-                                                onClick={openSelectedAlbumGallery}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' || e.key === ' ') {
-                                                        e.preventDefault();
-                                                        openSelectedAlbumGallery();
-                                                    }
-                                                }}
-                                                role="button"
-                                                tabIndex={0}
-                                                aria-label="Open album art gallery"
-                                            >
-                                                <AlbumArtStack
-                                                    images={(selectedAlbum.albumImages && selectedAlbum.albumImages.length > 0)
-                                                        ? selectedAlbum.albumImages
-                                                        : (selectedAlbum.imagesThumbs || [])}
-                                                    onClick={openSelectedAlbumGallery}
-                                                    heroPriority={true}
-                                                />
-                                            </div>
-                                            <div className="header-info">
-                                                <h1 className="f-header album-title">{selectedAlbum.name}</h1>
-                                                {albumHeaderArtist && <div className="f-ui album-artist">{albumHeaderArtist}</div>}
-                                                {albumHeroMeta && <div className="album-hero-meta">{albumHeroMeta}</div>}
-                                                {selectedAlbum.description && (
-                                                    <div
-                                                        ref={albumDescRef}
-                                                        className={albumDescriptionClassName}
-                                                    >
-                                                        {!isAlbumDescExpanded ? (
-                                                            <span ref={albumDescTextRef} className="album-desc-text">
-                                                                {isAlbumDescOverflowing ? albumDescCollapsedText : selectedAlbum.description}
-                                                                {isAlbumDescOverflowing && (
-                                                                    <span className="album-desc-inline-tail">
-                                                                        <span className="album-desc-ellipsis">...</span>
-                                                                        <button
-                                                                            type="button"
-                                                                            className="album-desc-toggle is-inline"
-                                                                            onClick={handleAlbumDescriptionToggle}
-                                                                            aria-expanded={false}
-                                                                            aria-label="Expand album description"
-                                                                        >
-                                                                            MORE
-                                                                        </button>
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                        ) : (
-                                                            <>
-                                                                <span ref={albumDescTextRef} className="album-desc-text">
-                                                                    {selectedAlbum.description}
-                                                                </span>
-                                                                {isAlbumDescOverflowing && (
-                                                                    <button
-                                                                        type="button"
-                                                                        className="album-desc-toggle is-expanded"
-                                                                        onClick={handleAlbumDescriptionToggle}
-                                                                        aria-expanded={true}
-                                                                        aria-label="Collapse album description"
-                                                                    >
-                                                                        SHOW LESS
-                                                                    </button>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                <div className="album-actions">
-                                                    <div className="album-primary-actions">
-                                                        <button
-                                                            className="btn-main album-hero-action-btn album-hero-play-btn"
-                                                            onClick={playCurrentAlbumAll}
-                                                            disabled={!selectedAlbum?.tracks?.length}
-                                                            title="Play all tracks from this album"
-                                                        >
-                                                            <Icon name="play" size={16} />
-                                                            Play
-                                                        </button>
-                                                        <button
-                                                            className="btn-main album-hero-action-btn album-hero-download-btn"
-                                                            onClick={downloadFullAlbum}
-                                                            disabled={!!albumProgress || albumIsQueued}
-                                                            title="Download album"
-                                                        >
-                                                            <Icon name={albumIsQueued ? "list" : "download"} size={15} />
-                                                            {albumProgress ? `${Math.round(albumProgress.progress)}%` : albumIsQueued ? "Queued" : "Download"}
-                                                        </button>
-                                                        <button
-                                                            className={`btn-icon-only album-hero-icon-btn album-hero-like-icon-btn${isSelectedAlbumLiked ? ' is-active' : ''}`}
-                                                            onClick={toggleSelectedAlbumLike}
-                                                            disabled={!selectedAlbum?.tracks?.length}
-                                                            aria-label={isSelectedAlbumLiked ? "Unlike album" : "Like album"}
-                                                            aria-pressed={isSelectedAlbumLiked}
-                                                            title={isSelectedAlbumLiked ? "Unlike album" : "Like album"}
-                                                        >
-                                                            <Icon name={isSelectedAlbumLiked ? "heartFilled" : "heart"} size={20} />
-                                                        </button>
-                                                        <button
-                                                            className={`btn-icon-only album-hero-icon-btn album-hero-add-icon-btn${isAlbumPlaylistFeedbackActive ? ' is-feedback' : ''}`}
-                                                            onClick={handleAddCurrentAlbumToPlaylist}
-                                                            disabled={!selectedAlbum?.tracks?.length}
-                                                            title="Add album tracks to playlist"
-                                                            aria-label="Add album tracks to playlist"
-                                                        >
-                                                            <Icon name={isAlbumPlaylistFeedbackActive ? "doubleCheck" : "plus"} size={21} />
-                                                        </button>
-                                                        <button
-                                                            className="btn-icon-only album-hero-icon-btn album-hero-share-icon-btn"
-                                                            onClick={handleShareAlbumLink}
-                                                            disabled={!selectedAlbum?.tracks?.length}
-                                                            title="Share album link"
-                                                            aria-label="Share album link"
-                                                        >
-                                                            <Icon name="link" size={20} />
-                                                        </button>
-                                                        {(albumProgress || albumIsQueued) && albumQueueItemId && (
-                                                            <button
-                                                                className="btn-mini album-hero-cancel-btn"
-                                                                onClick={cancelSelectedAlbumDownload}
-                                                                title="Cancel album download"
-                                                                aria-label="Cancel album download"
-                                                            >
-                                                                <Icon name="close" size={14} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <span className="album-track-count">
-                                                        {selectedAlbum.tracks.length} Tracks
-                                                        {albumDurationText ? ` · ${albumDurationText}` : ''}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="track-filter-bar desktop-only">
-                                            <div className="track-filter-input-wrap">
-                                                <Icon name="search" size={14} />
-                                                <input
-                                                    type="text"
-                                                    value={trackFilterQuery}
-                                                    onChange={(e) => setTrackFilterQuery(e.target.value)}
-                                                    placeholder="Search tracks..."
-                                                    className="track-filter-input"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div
-                                            ref={trackListRef}
-                                            className={`track-list medieval-scroll ${shouldVirtualizeTrackList ? 'is-virtualized' : ''}`}
-                                        >
-                                            {filteredAlbumTracks.length === 0 ? (
-                                                <div className="track-filter-empty desktop-only">No tracks match this search.</div>
-                                            ) : (
-                                                <div
-                                                    className={shouldVirtualizeTrackList ? 'track-list-virtual-window' : undefined}
-                                                    style={shouldVirtualizeTrackList
-                                                        ? { paddingTop: `${virtualTrackTopPadding}px`, paddingBottom: `${virtualTrackBottomPadding}px` }
-                                                        : undefined}
-                                                >
-                                                    {(shouldVirtualizeTrackList ? virtualizedFilteredAlbumTracks : filteredAlbumTracks).map(({ track: t, originalIndex: i }: any) => {
-                                                        const isCurrent = currentTrack && currentTrack.title === t.title && currentTrack.albumName === selectedAlbum.name;
-                                                        return (
-                                                            <div
-                                                                className={shouldVirtualizeTrackList ? 'virtual-track-row' : undefined}
-                                                                data-track-index={i}
-                                                                key={t.url || `${i}-${t.title}`}
-                                                            >
-                                                                <TrackRow
-                                                                    t={t}
-                                                                    i={i}
-                                                                    isCurrent={isCurrent}
-                                                                    isPlaying={isPlaying}
-                                                                    trackProgress={getTrackDownloadProgress(t)}
-                                                                    playTrack={playTrack}
-                                                                    addToQueue={addToQueue}
-                                                                    addToPlaybackQueue={addTrackToPlaybackQueue}
-                                                                    selectedAlbumTracks={selectedAlbum.tracks}
-                                                                    isLiked={likedTrackUrlSet.has(String(t?.url || '').trim())}
-                                                                    onLike={handleTrackLike}
-                                                                    onAddToPlaylist={handleAddTrackToPlaylist}
-                                                                    onShareTrack={handleShareTrackLink}
-                                                                    isPlaylistRecentlyAdded={trackHasRecentPlaylistAdd(t)}
-                                                                    thumbnail={selectedAlbum.imagesThumbs?.[0] || selectedAlbum.albumImages?.[0]}
-                                                                    lightweightTitleMode={shouldUseLightweightTrackRows}
-                                                                />
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="album-tracklist-footer">
-                                            {selectedAlbum.dateAdded && (
-                                                <div className="album-tracklist-date">{selectedAlbum.dateAdded} (Added)</div>
-                                            )}
-                                            <div className="album-tracklist-summary">
-                                                <span>{selectedAlbum.tracks.length} songs</span>
-                                                {albumDurationText ? <span className="album-tracklist-duration"> · {albumDurationText}</span> : null}
-                                            </div>
-                                            {selectedAlbum.publisher && (
-                                                <div className="album-tracklist-copyright">(c) {selectedAlbum.publisher}</div>
-                                            )}
-                                            {albumFormatWithSizes.length > 0 && (
-                                                <div className="album-tracklist-meta-inline formats-only">
-                                                    <span className="album-tracklist-meta-inline-value">
-                                                        {albumFormatWithSizes.join(' · ')}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {albumComments.length > 0 && (
-                                            <>
-                                                <div className="mobile-section-toggle-wrap">
-                                                    <button
-                                                        type="button"
-                                                        className="mobile-section-toggle"
-                                                        onClick={() => setIsAlbumCommentsOpenMobile((prev) => !prev)}
-                                                        aria-expanded={shouldShowAlbumComments}
-                                                        aria-controls="album-comments-section"
-                                                    >
-                                                        <span>{shouldShowAlbumComments ? 'Hide Comments' : `Show Comments (${albumCommentCountLabel})`}</span>
-                                                        <Icon name={shouldShowAlbumComments ? "chevronUp" : "chevronDown"} size={16} />
+                            <div className="content-stack">
+                                {view === 'home' && (
+                                    <ViewPanel>
+                                        {selectedAlbum ? (
+                                            <div className="content-inner">
+                                                <div className="album-back-floating-wrap">
+                                                    <button className="btn-back-floating" onClick={handleBack}>
+                                                        <Icon name="arrowLeft" size={16} />
+                                                        Back
                                                     </button>
                                                 </div>
-                                                {shouldShowAlbumComments ? (
-                                                    <section className="album-comments" id="album-comments-section" aria-label="Album comments">
-                                                        <div className="album-comments-head">
-                                                            <h2 className="f-header album-comments-title">Comments</h2>
-                                                            <div className="album-comments-meta">
-                                                                <span>{albumCommentCountLabel}</span>
-                                                                {selectedAlbum.commentsThreadUrl && (
-                                                                    <a
-                                                                        className="album-comments-thread-link"
-                                                                        href={selectedAlbum.commentsThreadUrl}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                    >
-                                                                        Open Thread
-                                                                    </a>
+                                                <div className="meta-header">
+                                                    <div
+                                                        className="album-hero-art-wrap"
+                                                        onClick={openSelectedAlbumGallery}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                                e.preventDefault();
+                                                                openSelectedAlbumGallery();
+                                                            }
+                                                        }}
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        aria-label="Open album art gallery"
+                                                    >
+                                                        <AlbumArtStack
+                                                            images={(selectedAlbum.albumImages && selectedAlbum.albumImages.length > 0)
+                                                                ? selectedAlbum.albumImages
+                                                                : (selectedAlbum.imagesThumbs || [])}
+                                                            onClick={openSelectedAlbumGallery}
+                                                            heroPriority={true}
+                                                        />
+                                                    </div>
+                                                    <div className="header-info">
+                                                        <h1 className="f-header album-title">{selectedAlbum.name}</h1>
+                                                        {albumHeaderArtist && <div className="f-ui album-artist">{albumHeaderArtist}</div>}
+                                                        {albumHeroMeta && <div className="album-hero-meta">{albumHeroMeta}</div>}
+                                                        {selectedAlbum.description && (
+                                                            <div
+                                                                ref={albumDescRef}
+                                                                className={albumDescriptionClassName}
+                                                            >
+                                                                {!isAlbumDescExpanded ? (
+                                                                    <span ref={albumDescTextRef} className="album-desc-text">
+                                                                        {isAlbumDescOverflowing ? albumDescCollapsedText : selectedAlbum.description}
+                                                                        {isAlbumDescOverflowing && (
+                                                                            <span className="album-desc-inline-tail">
+                                                                                <span className="album-desc-ellipsis">...</span>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="album-desc-toggle is-inline"
+                                                                                    onClick={handleAlbumDescriptionToggle}
+                                                                                    aria-expanded={false}
+                                                                                    aria-label="Expand album description"
+                                                                                >
+                                                                                    MORE
+                                                                                </button>
+                                                                            </span>
+                                                                        )}
+                                                                    </span>
+                                                                ) : (
+                                                                    <>
+                                                                        <span ref={albumDescTextRef} className="album-desc-text">
+                                                                            {selectedAlbum.description}
+                                                                        </span>
+                                                                        {isAlbumDescOverflowing && (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="album-desc-toggle is-expanded"
+                                                                                onClick={handleAlbumDescriptionToggle}
+                                                                                aria-expanded={true}
+                                                                                aria-label="Collapse album description"
+                                                                            >
+                                                                                SHOW LESS
+                                                                            </button>
+                                                                        )}
+                                                                    </>
                                                                 )}
                                                             </div>
+                                                        )}
+                                                        <div className="album-actions">
+                                                            <div className="album-primary-actions">
+                                                                <button
+                                                                    className="btn-main album-hero-action-btn album-hero-play-btn"
+                                                                    onClick={playCurrentAlbumAll}
+                                                                    disabled={!selectedAlbum?.tracks?.length}
+                                                                    title="Play all tracks from this album"
+                                                                >
+                                                                    <Icon name="play" size={16} />
+                                                                    Play
+                                                                </button>
+                                                                <button
+                                                                    className="btn-main album-hero-action-btn album-hero-download-btn"
+                                                                    onClick={downloadFullAlbum}
+                                                                    disabled={!!albumProgress || albumIsQueued}
+                                                                    title="Download album"
+                                                                >
+                                                                    <Icon name={albumIsQueued ? "list" : "download"} size={15} />
+                                                                    {albumProgress ? `${Math.round(albumProgress.progress)}%` : albumIsQueued ? "Queued" : "Download"}
+                                                                </button>
+                                                                <button
+                                                                    className={`btn-icon-only album-hero-icon-btn album-hero-like-icon-btn${isSelectedAlbumLiked ? ' is-active' : ''}`}
+                                                                    onClick={toggleSelectedAlbumLike}
+                                                                    disabled={!selectedAlbum?.tracks?.length}
+                                                                    aria-label={isSelectedAlbumLiked ? "Unlike album" : "Like album"}
+                                                                    aria-pressed={isSelectedAlbumLiked}
+                                                                    title={isSelectedAlbumLiked ? "Unlike album" : "Like album"}
+                                                                >
+                                                                    <Icon name={isSelectedAlbumLiked ? "heartFilled" : "heart"} size={20} />
+                                                                </button>
+                                                                <button
+                                                                    className={`btn-icon-only album-hero-icon-btn album-hero-add-icon-btn${isAlbumPlaylistFeedbackActive ? ' is-feedback' : ''}`}
+                                                                    onClick={handleAddCurrentAlbumToPlaylist}
+                                                                    disabled={!selectedAlbum?.tracks?.length}
+                                                                    title="Add album tracks to playlist"
+                                                                    aria-label="Add album tracks to playlist"
+                                                                >
+                                                                    <Icon name={isAlbumPlaylistFeedbackActive ? "doubleCheck" : "plus"} size={21} />
+                                                                </button>
+                                                                <button
+                                                                    className="btn-icon-only album-hero-icon-btn album-hero-share-icon-btn"
+                                                                    onClick={handleShareAlbumLink}
+                                                                    disabled={!selectedAlbum?.tracks?.length}
+                                                                    title="Share album link"
+                                                                    aria-label="Share album link"
+                                                                >
+                                                                    <Icon name="link" size={20} />
+                                                                </button>
+                                                                {(albumProgress || albumIsQueued) && albumQueueItemId && (
+                                                                    <button
+                                                                        className="btn-mini album-hero-cancel-btn"
+                                                                        onClick={cancelSelectedAlbumDownload}
+                                                                        title="Cancel album download"
+                                                                        aria-label="Cancel album download"
+                                                                    >
+                                                                        <Icon name="close" size={14} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <span className="album-track-count">
+                                                                {selectedAlbum.tracks.length} Tracks
+                                                                {albumDurationText ? ` · ${albumDurationText}` : ''}
+                                                            </span>
                                                         </div>
-                                                        <div className="album-comments-list">
-                                                            {visibleAlbumComments.map((comment: any, commentIndex: number) => {
-                                                                const username = String(comment?.username || `User ${commentIndex + 1}`).trim() || `User ${commentIndex + 1}`;
-                                                                const postedAt = String(comment?.postedAt || '').trim();
-                                                                const status = String(comment?.status || '').trim();
-                                                                const message = String(comment?.message || '').trim();
-                                                                const avatarUrl = String(comment?.avatarUrl || '').trim();
-                                                                const userUrl = String(comment?.userUrl || '').trim();
-                                                                const avatarInitial = username.charAt(0).toUpperCase() || '?';
-
+                                                    </div>
+                                                </div>
+                                                <div className="track-filter-bar desktop-only">
+                                                    <div className="track-filter-input-wrap">
+                                                        <Icon name="search" size={14} />
+                                                        <input
+                                                            type="text"
+                                                            value={trackFilterQuery}
+                                                            onChange={(e) => setTrackFilterQuery(e.target.value)}
+                                                            placeholder="Search tracks..."
+                                                            className="track-filter-input"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    ref={trackListRef}
+                                                    className={`track-list medieval-scroll ${shouldVirtualizeTrackList ? 'is-virtualized' : ''}`}
+                                                >
+                                                    {filteredAlbumTracks.length === 0 ? (
+                                                        <div className="track-filter-empty desktop-only">No tracks match this search.</div>
+                                                    ) : (
+                                                        <div
+                                                            className={shouldVirtualizeTrackList ? 'track-list-virtual-window' : undefined}
+                                                            style={shouldVirtualizeTrackList
+                                                                ? { paddingTop: `${virtualTrackTopPadding}px`, paddingBottom: `${virtualTrackBottomPadding}px` }
+                                                                : undefined}
+                                                        >
+                                                            {(shouldVirtualizeTrackList ? virtualizedFilteredAlbumTracks : filteredAlbumTracks).map(({ track: t, originalIndex: i }: any) => {
+                                                                const isCurrent = currentTrack && currentTrack.title === t.title && currentTrack.albumName === selectedAlbum.name;
                                                                 return (
-                                                                    <article className="album-comment-item" key={`${username}-${postedAt}-${commentIndex}`}>
-                                                                        <div className="album-comment-avatar-wrap" aria-hidden="true">
-                                                                            {avatarUrl ? (
-                                                                                <img
-                                                                                    src={avatarUrl}
-                                                                                    alt=""
-                                                                                    className="album-comment-avatar"
-                                                                                    loading="lazy"
-                                                                                    referrerPolicy="no-referrer"
-                                                                                />
-                                                                            ) : (
-                                                                                <span className="album-comment-avatar-fallback">{avatarInitial}</span>
-                                                                            )}
-                                                                        </div>
-                                                                        <div className="album-comment-main">
-                                                                            <div className="album-comment-top">
-                                                                                {userUrl ? (
-                                                                                    <a
-                                                                                        className="album-comment-user"
-                                                                                        href={userUrl}
-                                                                                        target="_blank"
-                                                                                        rel="noopener noreferrer"
-                                                                                    >
-                                                                                        {username}
-                                                                                    </a>
-                                                                                ) : (
-                                                                                    <span className="album-comment-user">{username}</span>
-                                                                                )}
-                                                                                <div className="album-comment-meta">
-                                                                                    {postedAt && (
-                                                                                        <span className="album-comment-time">{postedAt}</span>
-                                                                                    )}
-                                                                                    {status && (
-                                                                                        <span className="album-comment-status">{status}</span>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                            <p className="album-comment-message">{message}</p>
-                                                                        </div>
-                                                                    </article>
+                                                                    <div
+                                                                        className={shouldVirtualizeTrackList ? 'virtual-track-row' : undefined}
+                                                                        data-track-index={i}
+                                                                        key={t.url || `${i}-${t.title}`}
+                                                                    >
+                                                                        <TrackRow
+                                                                            t={t}
+                                                                            i={i}
+                                                                            isCurrent={isCurrent}
+                                                                            isPlaying={isPlaying}
+                                                                            trackProgress={getTrackDownloadProgress(t)}
+                                                                            playTrack={playTrack}
+                                                                            addToQueue={addToQueue}
+                                                                            addToPlaybackQueue={addTrackToPlaybackQueue}
+                                                                            selectedAlbumTracks={selectedAlbum.tracks}
+                                                                            isLiked={likedTrackUrlSet.has(String(t?.url || '').trim())}
+                                                                            onLike={handleTrackLike}
+                                                                            onAddToPlaylist={handleAddTrackToPlaylist}
+                                                                            onShareTrack={handleShareTrackLink}
+                                                                            isPlaylistRecentlyAdded={trackHasRecentPlaylistAdd(t)}
+                                                                            thumbnail={selectedAlbum.imagesThumbs?.[0] || selectedAlbum.albumImages?.[0]}
+                                                                            lightweightTitleMode={shouldUseLightweightTrackRows}
+                                                                        />
+                                                                    </div>
                                                                 );
                                                             })}
                                                         </div>
-                                                        {albumComments.length > ALBUM_COMMENTS_COLLAPSED_COUNT && (
-                                                            <div className="album-comments-footer">
+                                                    )}
+                                                </div>
+                                                <div className="album-tracklist-footer">
+                                                    {selectedAlbum.dateAdded && (
+                                                        <div className="album-tracklist-date">{selectedAlbum.dateAdded} (Added)</div>
+                                                    )}
+                                                    <div className="album-tracklist-summary">
+                                                        <span>{selectedAlbum.tracks.length} songs</span>
+                                                        {albumDurationText ? <span className="album-tracklist-duration"> · {albumDurationText}</span> : null}
+                                                    </div>
+                                                    {selectedAlbum.publisher && (
+                                                        <div className="album-tracklist-copyright">(c) {selectedAlbum.publisher}</div>
+                                                    )}
+                                                    {albumFormatWithSizes.length > 0 && (
+                                                        <div className="album-tracklist-meta-inline formats-only">
+                                                            <span className="album-tracklist-meta-inline-value">
+                                                                {albumFormatWithSizes.join(' · ')}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {albumComments.length > 0 && (
+                                                    <>
+                                                        <div className="mobile-section-toggle-wrap">
+                                                            <button
+                                                                type="button"
+                                                                className="mobile-section-toggle"
+                                                                onClick={() => setIsAlbumCommentsOpenMobile((prev) => !prev)}
+                                                                aria-expanded={shouldShowAlbumComments}
+                                                                aria-controls="album-comments-section"
+                                                            >
+                                                                <span>{shouldShowAlbumComments ? 'Hide Comments' : `Show Comments (${albumCommentCountLabel})`}</span>
+                                                                <Icon name={shouldShowAlbumComments ? "chevronUp" : "chevronDown"} size={16} />
+                                                            </button>
+                                                        </div>
+                                                        {shouldShowAlbumComments ? (
+                                                            <section className="album-comments" id="album-comments-section" aria-label="Album comments">
+                                                                <div className="album-comments-head">
+                                                                    <h2 className="f-header album-comments-title">Comments</h2>
+                                                                    <div className="album-comments-meta">
+                                                                        <span>{albumCommentCountLabel}</span>
+                                                                        {selectedAlbum.commentsThreadUrl && (
+                                                                            <a
+                                                                                className="album-comments-thread-link"
+                                                                                href={selectedAlbum.commentsThreadUrl}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                            >
+                                                                                Open Thread
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="album-comments-list">
+                                                                    {visibleAlbumComments.map((comment: any, commentIndex: number) => {
+                                                                        const username = String(comment?.username || `User ${commentIndex + 1}`).trim() || `User ${commentIndex + 1}`;
+                                                                        const postedAt = String(comment?.postedAt || '').trim();
+                                                                        const status = String(comment?.status || '').trim();
+                                                                        const message = String(comment?.message || '').trim();
+                                                                        const avatarUrl = String(comment?.avatarUrl || '').trim();
+                                                                        const userUrl = String(comment?.userUrl || '').trim();
+                                                                        const avatarInitial = username.charAt(0).toUpperCase() || '?';
+
+                                                                        return (
+                                                                            <article className="album-comment-item" key={`${username}-${postedAt}-${commentIndex}`}>
+                                                                                <div className="album-comment-avatar-wrap" aria-hidden="true">
+                                                                                    {avatarUrl ? (
+                                                                                        <img
+                                                                                            src={avatarUrl}
+                                                                                            alt=""
+                                                                                            className="album-comment-avatar"
+                                                                                            loading="lazy"
+                                                                                            referrerPolicy="no-referrer"
+                                                                                        />
+                                                                                    ) : (
+                                                                                        <span className="album-comment-avatar-fallback">{avatarInitial}</span>
+                                                                                    )}
+                                                                                </div>
+                                                                                <div className="album-comment-main">
+                                                                                    <div className="album-comment-top">
+                                                                                        {userUrl ? (
+                                                                                            <a
+                                                                                                className="album-comment-user"
+                                                                                                href={userUrl}
+                                                                                                target="_blank"
+                                                                                                rel="noopener noreferrer"
+                                                                                            >
+                                                                                                {username}
+                                                                                            </a>
+                                                                                        ) : (
+                                                                                            <span className="album-comment-user">{username}</span>
+                                                                                        )}
+                                                                                        <div className="album-comment-meta">
+                                                                                            {postedAt && (
+                                                                                                <span className="album-comment-time">{postedAt}</span>
+                                                                                            )}
+                                                                                            {status && (
+                                                                                                <span className="album-comment-status">{status}</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <p className="album-comment-message">{message}</p>
+                                                                                </div>
+                                                                            </article>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                                {albumComments.length > ALBUM_COMMENTS_COLLAPSED_COUNT && (
+                                                                    <div className="album-comments-footer">
+                                                                        <button
+                                                                            type="button"
+                                                                            className="album-comments-more-btn"
+                                                                            onClick={() => setIsAllCommentsVisible((prev) => !prev)}
+                                                                        >
+                                                                            {isAllCommentsVisible
+                                                                                ? 'Show Less'
+                                                                                : `Show ${hiddenAlbumCommentsCount} More`}
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </section>
+                                                        ) : null}
+                                                    </>
+                                                )}
+                                                {selectedAlbum.relatedAlbums && selectedAlbum.relatedAlbums.length > 0 ? (
+                                                    <div id="related-albums-section">
+                                                        <SimilarAlbums
+                                                            albums={selectedAlbum.relatedAlbums}
+                                                            onSelect={selectAlbum}
+                                                            deferLoading={isAudioLoading}
+                                                            pageShowSignal={pageShowSignal}
+                                                        />
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        ) : isAlbumLoading ? (
+                                            <LoadingIndicator />
+                                        ) : (
+                                            <div className="home-feed-view content-inner">
+                                                <div className="latest-arrivals-head">
+                                                    <div className="latest-arrivals-copy">
+                                                        <h1 className={`f-header ${isSearchMode ? 'search-results-title' : 'latest-arrivals-title'}`}>
+                                                            {isSearchMode ? 'Search Results' : 'Latest Arrivals'}
+                                                        </h1>
+                                                        <div className="home-feed-status">
+                                                            {isSearchMode
+                                                                ? (`For ${activeSearchTerm || 'your query'} · ${((loading && results.length === 0) ? 'Searching albums...' : searchSummaryText)}`)
+                                                                : 'Browse latest KHInsider updates'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {isSearchMode && (
+                                                    <>
+                                                        <div className="mobile-collapse-wrap">
+                                                            <button
+                                                                type="button"
+                                                                className="mobile-collapse-toggle"
+                                                                onClick={() => setIsSearchFiltersOpenMobile((prev) => !prev)}
+                                                                aria-expanded={shouldShowSearchFilters}
+                                                                aria-controls="search-filter-toolbar"
+                                                            >
+                                                                <span>Filters</span>
+                                                                <Icon name={shouldShowSearchFilters ? "chevronUp" : "chevronDown"} size={16} />
+                                                            </button>
+                                                        </div>
+                                                        {shouldShowSearchFilters ? (
+                                                            <div className="search-filter-toolbar" id="search-filter-toolbar">
+                                                                <label className="search-filter-group">
+                                                                    <span className="search-filter-label">Sort</span>
+                                                                    <select
+                                                                        className="search-filter-select"
+                                                                        value={searchFilters.sort || 'relevance'}
+                                                                        onChange={(e) => handleSearchFilterChange('sort', e.target.value)}
+                                                                        disabled={loading}
+                                                                    >
+                                                                        {sortFilterOptions.map((option) => (
+                                                                            <option key={`sort-${option.value || 'default'}`} value={option.value}>
+                                                                                {option.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </label>
+                                                                <label className="search-filter-group">
+                                                                    <span className="search-filter-label">Album Type</span>
+                                                                    <select
+                                                                        className="search-filter-select"
+                                                                        value={searchFilters.album_type}
+                                                                        onChange={(e) => handleSearchFilterChange('album_type', e.target.value)}
+                                                                        disabled={loading}
+                                                                    >
+                                                                        {albumTypeFilterOptions.map((option) => (
+                                                                            <option key={`type-${option.value || 'any'}`} value={option.value}>
+                                                                                {option.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </label>
+                                                                <label className="search-filter-group">
+                                                                    <span className="search-filter-label">Year</span>
+                                                                    <select
+                                                                        className="search-filter-select"
+                                                                        value={searchFilters.album_year}
+                                                                        onChange={(e) => handleSearchFilterChange('album_year', e.target.value)}
+                                                                        disabled={loading}
+                                                                    >
+                                                                        {albumYearFilterOptions.map((option) => (
+                                                                            <option key={`year-${option.value || 'any'}`} value={option.value}>
+                                                                                {option.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </label>
+                                                                <label className="search-filter-group">
+                                                                    <span className="search-filter-label">Platform</span>
+                                                                    <select
+                                                                        className="search-filter-select"
+                                                                        value={searchFilters.album_category}
+                                                                        onChange={(e) => handleSearchFilterChange('album_category', e.target.value)}
+                                                                        disabled={loading}
+                                                                    >
+                                                                        {albumCategoryFilterOptions.map((option) => (
+                                                                            <option key={`platform-${option.value || 'any'}`} value={option.value}>
+                                                                                {option.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                </label>
                                                                 <button
                                                                     type="button"
-                                                                    className="album-comments-more-btn"
-                                                                    onClick={() => setIsAllCommentsVisible((prev) => !prev)}
+                                                                    className="search-filter-clear"
+                                                                    onClick={clearSearchFilters}
+                                                                    disabled={loading}
                                                                 >
-                                                                    {isAllCommentsVisible
-                                                                        ? 'Show Less'
-                                                                        : `Show ${hiddenAlbumCommentsCount} More`}
+                                                                    Clear Filters
                                                                 </button>
                                                             </div>
-                                                        )}
-                                                    </section>
-                                                ) : null}
-                                            </>
-                                        )}
-                                        {selectedAlbum.relatedAlbums && selectedAlbum.relatedAlbums.length > 0 ? (
-                                            <div id="related-albums-section">
-                                                <SimilarAlbums
-                                                    albums={selectedAlbum.relatedAlbums}
-                                                    onSelect={selectAlbum}
-                                                    deferLoading={isAudioLoading}
-                                                    pageShowSignal={pageShowSignal}
-                                                />
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                ) : isAlbumLoading ? (
-                                    <LoadingIndicator />
-                                ) : (
-                                    <div className="home-feed-view content-inner">
-                                        <div className="latest-arrivals-head">
-                                            <div className="latest-arrivals-copy">
-                                                <h1 className={`f-header ${isSearchMode ? 'search-results-title' : 'latest-arrivals-title'}`}>
-                                                    {isSearchMode ? 'Search Results' : 'Latest Arrivals'}
-                                                </h1>
-                                                <div className="home-feed-status">
-                                                    {isSearchMode
-                                                        ? (`For ${activeSearchTerm || 'your query'} · ${((loading && results.length === 0) ? 'Searching albums...' : searchSummaryText)}`)
-                                                        : 'Browse latest KHInsider updates'}
+                                                        ) : null}
+                                                    </>
+                                                )}
+                                                <div ref={homeCardGridRef} className="home-card-grid">
+                                                    {isSearchMode ? (
+                                                        (loading && results.length === 0) ? (
+                                                            <div className="home-feed-loading">
+                                                                <LoadingIndicator />
+                                                            </div>
+                                                        ) : results.length === 0 ? (
+                                                            <div className="home-feed-empty">No entries found.</div>
+                                                        ) : (
+                                                            <>
+                                                                {shouldVirtualizeHomeGrid && virtualHomeGridTopPadding > 0 ? (
+                                                                    <div
+                                                                        className="home-grid-virtual-spacer"
+                                                                        aria-hidden="true"
+                                                                        style={{ gridColumn: '1 / -1', height: `${virtualHomeGridTopPadding}px` }}
+                                                                    />
+                                                                ) : null}
+                                                                {virtualizedHomeFeedItems.map(({ item, originalIndex }: { item: any; originalIndex: number }) => {
+                                                                    const fallbackImage = String(item?.icon || '').trim();
+                                                                    const cardImage = getLargeThumbUrl(fallbackImage);
+                                                                    return (
+                                                                        <HomeAlbumCard
+                                                                            key={`search-${originalIndex}-${item?.url || ''}`}
+                                                                            title={String(item?.title || 'Unknown Title')}
+                                                                            imageUrl={cardImage}
+                                                                            artist={String(item?.albumType || '').trim()}
+                                                                            metaLine={String(item?.year || '').trim()}
+                                                                            lightweightTextMode={shouldUseLightweightHomeCardText}
+                                                                            allowProxyFallback={true}
+                                                                            pageShowSignal={pageShowSignal}
+                                                                            selectPayload={item}
+                                                                            onSelect={handleHomeCardSelect}
+                                                                        />
+                                                                    );
+                                                                })}
+                                                                {shouldVirtualizeHomeGrid && virtualHomeGridBottomPadding > 0 ? (
+                                                                    <div
+                                                                        className="home-grid-virtual-spacer"
+                                                                        aria-hidden="true"
+                                                                        style={{ gridColumn: '1 / -1', height: `${virtualHomeGridBottomPadding}px` }}
+                                                                    />
+                                                                ) : null}
+                                                            </>
+                                                        )
+                                                    ) : (
+                                                        latestUpdates.length === 0 ? (
+                                                            <div className="home-feed-empty">Loading latest releases...</div>
+                                                        ) : (
+                                                            <>
+                                                                {shouldVirtualizeHomeGrid && virtualHomeGridTopPadding > 0 ? (
+                                                                    <div
+                                                                        className="home-grid-virtual-spacer"
+                                                                        aria-hidden="true"
+                                                                        style={{ gridColumn: '1 / -1', height: `${virtualHomeGridTopPadding}px` }}
+                                                                    />
+                                                                ) : null}
+                                                                {virtualizedHomeFeedItems.map(({ item, originalIndex }: { item: any; originalIndex: number }) => {
+                                                                    const fallbackImage = String(item?.image || '').trim();
+                                                                    const cardImage = getLargeThumbUrl(fallbackImage);
+                                                                    return (
+                                                                        <HomeAlbumCard
+                                                                            key={`latest-${originalIndex}-${item?.url || ''}`}
+                                                                            title={String(item?.title || 'Unknown Title')}
+                                                                            imageUrl={cardImage}
+                                                                            artist={String(item?.albumType || '').trim()}
+                                                                            metaLine={String(item?.year || '').trim()}
+                                                                            lightweightTextMode={shouldUseLightweightHomeCardText}
+                                                                            allowProxyFallback={true}
+                                                                            pageShowSignal={pageShowSignal}
+                                                                            selectPayload={item}
+                                                                            onSelect={handleHomeCardSelect}
+                                                                        />
+                                                                    );
+                                                                })}
+                                                                {shouldVirtualizeHomeGrid && virtualHomeGridBottomPadding > 0 ? (
+                                                                    <div
+                                                                        className="home-grid-virtual-spacer"
+                                                                        aria-hidden="true"
+                                                                        style={{ gridColumn: '1 / -1', height: `${virtualHomeGridBottomPadding}px` }}
+                                                                    />
+                                                                ) : null}
+                                                            </>
+                                                        )
+                                                    )}
                                                 </div>
+                                                {isSearchMode && (
+                                                    <div className="search-infinite-footer">
+                                                        {isSearchAppending && (
+                                                            <div className="search-infinite-status">Loading more albums...</div>
+                                                        )}
+                                                        {!isSearchAppending && searchPagination.nextResult && (
+                                                            <div className="search-infinite-status">Scroll to load more</div>
+                                                        )}
+                                                        {!searchPagination.nextResult && results.length > 0 && (
+                                                            <div className="search-infinite-status">End of results</div>
+                                                        )}
+                                                        <div ref={searchLoadMoreRef} className="search-load-sentinel" aria-hidden="true" />
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                        {isSearchMode && (
-                                            <>
+                                        )}
+                                    </ViewPanel>
+                                )}
+
+                                {view === 'browse' && (
+                                    <ViewPanel>
+                                        <div className="content-inner">
+                                            <TabHeader
+                                                title="Browse"
+                                                subtitle={`${(browseTotalItems ?? browseItems.length).toLocaleString()} albums · ${browseLabel}`}
+                                                density="compact"
+                                            />
+                                            <div className="browse-view">
+                                                <div className="browse-current-strip" aria-live="polite">
+                                                    <span className="browse-current-kicker">Now Viewing</span>
+                                                    <span className="browse-current-title">{browseLabel}</span>
+                                                    {browseLoading ? (
+                                                        <span className="browse-current-loading" role="status" aria-label="Refreshing browse results">
+                                                            <MedievalSpinner className="spinner-svg small" />
+                                                            <span className="browse-current-loading-text">Refreshing</span>
+                                                        </span>
+                                                    ) : null}
+                                                </div>
                                                 <div className="mobile-collapse-wrap">
                                                     <button
                                                         type="button"
                                                         className="mobile-collapse-toggle"
-                                                        onClick={() => setIsSearchFiltersOpenMobile((prev) => !prev)}
-                                                        aria-expanded={shouldShowSearchFilters}
-                                                        aria-controls="search-filter-toolbar"
+                                                        onClick={() => setIsBrowseToolbarOpenMobile((prev) => !prev)}
+                                                        aria-expanded={shouldShowBrowseToolbar}
+                                                        aria-controls="browse-shortcuts"
                                                     >
-                                                        <span>Filters</span>
-                                                        <Icon name={shouldShowSearchFilters ? "chevronUp" : "chevronDown"} size={16} />
+                                                        <span>Browse Filters</span>
+                                                        <Icon name={shouldShowBrowseToolbar ? "chevronUp" : "chevronDown"} size={16} />
                                                     </button>
                                                 </div>
-                                                {shouldShowSearchFilters ? (
-                                                    <div className="search-filter-toolbar" id="search-filter-toolbar">
-                                                        <label className="search-filter-group">
-                                                            <span className="search-filter-label">Sort</span>
-                                                            <select
-                                                                className="search-filter-select"
-                                                                value={searchFilters.sort || 'relevance'}
-                                                                onChange={(e) => handleSearchFilterChange('sort', e.target.value)}
-                                                                disabled={loading}
-                                                            >
-                                                                {sortFilterOptions.map((option) => (
-                                                                    <option key={`sort-${option.value || 'default'}`} value={option.value}>
-                                                                        {option.label}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </label>
-                                                        <label className="search-filter-group">
-                                                            <span className="search-filter-label">Album Type</span>
-                                                            <select
-                                                                className="search-filter-select"
-                                                                value={searchFilters.album_type}
-                                                                onChange={(e) => handleSearchFilterChange('album_type', e.target.value)}
-                                                                disabled={loading}
-                                                            >
-                                                                {albumTypeFilterOptions.map((option) => (
-                                                                    <option key={`type-${option.value || 'any'}`} value={option.value}>
-                                                                        {option.label}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </label>
-                                                        <label className="search-filter-group">
-                                                            <span className="search-filter-label">Year</span>
-                                                            <select
-                                                                className="search-filter-select"
-                                                                value={searchFilters.album_year}
-                                                                onChange={(e) => handleSearchFilterChange('album_year', e.target.value)}
-                                                                disabled={loading}
-                                                            >
-                                                                {albumYearFilterOptions.map((option) => (
-                                                                    <option key={`year-${option.value || 'any'}`} value={option.value}>
-                                                                        {option.label}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </label>
-                                                        <label className="search-filter-group">
-                                                            <span className="search-filter-label">Platform</span>
-                                                            <select
-                                                                className="search-filter-select"
-                                                                value={searchFilters.album_category}
-                                                                onChange={(e) => handleSearchFilterChange('album_category', e.target.value)}
-                                                                disabled={loading}
-                                                            >
-                                                                {albumCategoryFilterOptions.map((option) => (
-                                                                    <option key={`platform-${option.value || 'any'}`} value={option.value}>
-                                                                        {option.label}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </label>
-                                                        <button
-                                                            type="button"
-                                                            className="search-filter-clear"
-                                                            onClick={clearSearchFilters}
-                                                            disabled={loading}
-                                                        >
-                                                            Clear Filters
-                                                        </button>
-                                                    </div>
-                                                ) : null}
-                                            </>
-                                        )}
-                                        <div ref={homeCardGridRef} className="home-card-grid">
-                                            {isSearchMode ? (
-                                                (loading && results.length === 0) ? (
-                                                    <div className="home-feed-loading">
-                                                        <LoadingIndicator />
-                                                    </div>
-                                                ) : results.length === 0 ? (
-                                                    <div className="home-feed-empty">No entries found.</div>
-                                                ) : (
-                                                    <>
-                                                        {shouldVirtualizeHomeGrid && virtualHomeGridTopPadding > 0 ? (
-                                                            <div
-                                                                className="home-grid-virtual-spacer"
-                                                                aria-hidden="true"
-                                                                style={{ gridColumn: '1 / -1', height: `${virtualHomeGridTopPadding}px` }}
-                                                            />
-                                                        ) : null}
-                                                        {virtualizedHomeFeedItems.map(({ item, originalIndex }: { item: any; originalIndex: number }) => {
-                                                            const fallbackImage = String(item?.icon || '').trim();
-                                                            const cardImage = getLargeThumbUrl(fallbackImage);
-                                                            return (
-                                                                <HomeAlbumCard
-                                                                    key={`search-${originalIndex}-${item?.url || ''}`}
-                                                                    title={String(item?.title || 'Unknown Title')}
-                                                                    imageUrl={cardImage}
-                                                                    artist={String(item?.albumType || '').trim()}
-                                                                    metaLine={String(item?.year || '').trim()}
-                                                                    lightweightTextMode={shouldUseLightweightHomeCardText}
-                                                                    allowProxyFallback={true}
-                                                                    pageShowSignal={pageShowSignal}
-                                                                    selectPayload={item}
-                                                                    onSelect={handleHomeCardSelect}
-                                                                />
-                                                            );
-                                                        })}
-                                                        {shouldVirtualizeHomeGrid && virtualHomeGridBottomPadding > 0 ? (
-                                                            <div
-                                                                className="home-grid-virtual-spacer"
-                                                                aria-hidden="true"
-                                                                style={{ gridColumn: '1 / -1', height: `${virtualHomeGridBottomPadding}px` }}
-                                                            />
-                                                        ) : null}
-                                                    </>
-                                                )
-                                            ) : (
-                                                latestUpdates.length === 0 ? (
-                                                    <div className="home-feed-empty">Loading latest releases...</div>
-                                                ) : (
-                                                    <>
-                                                        {shouldVirtualizeHomeGrid && virtualHomeGridTopPadding > 0 ? (
-                                                            <div
-                                                                className="home-grid-virtual-spacer"
-                                                                aria-hidden="true"
-                                                                style={{ gridColumn: '1 / -1', height: `${virtualHomeGridTopPadding}px` }}
-                                                            />
-                                                        ) : null}
-                                                        {virtualizedHomeFeedItems.map(({ item, originalIndex }: { item: any; originalIndex: number }) => {
-                                                            const fallbackImage = String(item?.image || '').trim();
-                                                            const cardImage = getLargeThumbUrl(fallbackImage);
-                                                            return (
-                                                                <HomeAlbumCard
-                                                                    key={`latest-${originalIndex}-${item?.url || ''}`}
-                                                                    title={String(item?.title || 'Unknown Title')}
-                                                                    imageUrl={cardImage}
-                                                                    artist={String(item?.albumType || '').trim()}
-                                                                    metaLine={String(item?.year || '').trim()}
-                                                                    lightweightTextMode={shouldUseLightweightHomeCardText}
-                                                                    allowProxyFallback={true}
-                                                                    pageShowSignal={pageShowSignal}
-                                                                    selectPayload={item}
-                                                                    onSelect={handleHomeCardSelect}
-                                                                />
-                                                            );
-                                                        })}
-                                                        {shouldVirtualizeHomeGrid && virtualHomeGridBottomPadding > 0 ? (
-                                                            <div
-                                                                className="home-grid-virtual-spacer"
-                                                                aria-hidden="true"
-                                                                style={{ gridColumn: '1 / -1', height: `${virtualHomeGridBottomPadding}px` }}
-                                                            />
-                                                        ) : null}
-                                                    </>
-                                                )
-                                            )}
-                                        </div>
-                                        {isSearchMode && (
-                                            <div className="search-infinite-footer">
-                                                {isSearchAppending && (
-                                                    <div className="search-infinite-status">Loading more albums...</div>
-                                                )}
-                                                {!isSearchAppending && searchPagination.nextResult && (
-                                                    <div className="search-infinite-status">Scroll to load more</div>
-                                                )}
-                                                {!searchPagination.nextResult && results.length > 0 && (
-                                                    <div className="search-infinite-status">End of results</div>
-                                                )}
-                                                <div ref={searchLoadMoreRef} className="search-load-sentinel" aria-hidden="true" />
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </ViewPanel>
-                            )}
-
-                            {view === 'browse' && (
-                            <ViewPanel>
-                                <div className="content-inner">
-                                    <TabHeader
-                                        title="Browse"
-                                        subtitle={`${(browseTotalItems ?? browseItems.length).toLocaleString()} albums · ${browseLabel}`}
-                                        density="compact"
-                                    />
-                                    <div className="browse-view">
-                                        <div className="browse-current-strip" aria-live="polite">
-                                            <span className="browse-current-kicker">Now Viewing</span>
-                                            <span className="browse-current-title">{browseLabel}</span>
-                                            {browseLoading ? (
-                                                <span className="browse-current-loading" role="status" aria-label="Refreshing browse results">
-                                                    <MedievalSpinner className="spinner-svg small" />
-                                                    <span className="browse-current-loading-text">Refreshing</span>
-                                                </span>
-                                            ) : null}
-                                        </div>
-                                        <div className="mobile-collapse-wrap">
-                                            <button
-                                                type="button"
-                                                className="mobile-collapse-toggle"
-                                                onClick={() => setIsBrowseToolbarOpenMobile((prev) => !prev)}
-                                                aria-expanded={shouldShowBrowseToolbar}
-                                                aria-controls="browse-shortcuts"
-                                            >
-                                                <span>Browse Filters</span>
-                                                <Icon name={shouldShowBrowseToolbar ? "chevronUp" : "chevronDown"} size={16} />
-                                            </button>
-                                        </div>
-                                        {shouldShowBrowseToolbar ? (
-                                        <section className="browse-toolbar" id="browse-shortcuts" aria-label="Browse shortcuts">
-                                            <div className="browse-group">
-                                                <div className="browse-group-head">
-                                                    <div className="browse-group-label">Albums</div>
-                                                    <div className="browse-group-hint">Charts and discovery lists</div>
-                                                </div>
-                                                <div className="browse-chip-list browse-chip-list-major">
-                                                    {BROWSE_ALBUM_SHORTCUTS.map((option) => {
-                                                        const isActive = browseSection === option.key;
-                                                        return (
-                                                            <button
-                                                                key={`browse-albums-${option.key}`}
-                                                                type="button"
-                                                                className={`browse-chip ${isActive ? 'is-active' : ''}`}
-                                                                onClick={() => openBrowseSection(option.key)}
-                                                            >
-                                                                {option.label}
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                            <div className="browse-group">
-                                                <div className="browse-group-head">
-                                                    <div className="browse-group-label">By Type</div>
-                                                    <div className="browse-group-hint">Filter by release format</div>
-                                                </div>
-                                                <div className="browse-chip-list">
-                                                    {BROWSE_TYPE_OPTIONS.map((option) => {
-                                                        const isActive = browseSection === 'type' && browseSlug === option.slug;
-                                                        return (
-                                                            <button
-                                                                key={`browse-type-${option.slug}`}
-                                                                type="button"
-                                                                className={`browse-chip ${isActive ? 'is-active' : ''}`}
-                                                                onClick={() => openBrowseType(option.slug)}
-                                                            >
-                                                                {option.label}
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                            <div className="browse-group">
-                                                <div className="browse-group-head">
-                                                    <div className="browse-group-label">By Year</div>
-                                                    <div className="browse-group-hint">Jump to any release year</div>
-                                                </div>
-                                                <div className="browse-year-row">
-                                                    <label className="browse-year-select-label" htmlFor="browse-year-select">
-                                                        Jump
-                                                    </label>
-                                                    <select
-                                                        id="browse-year-select"
-                                                        className="browse-year-select"
-                                                        value={browseSection === 'year' ? browseSlug : ''}
-                                                        onChange={(event) => {
-                                                            const nextYear = String(event.target.value || '').trim();
-                                                            if (!nextYear) return;
-                                                            openBrowseYear(nextYear);
-                                                        }}
-                                                    >
-                                                        <option value="">Select year</option>
-                                                        {browseAllYears.map((year) => (
-                                                            <option key={`browse-year-option-${year}`} value={year}>
-                                                                {year}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <button
-                                                        type="button"
-                                                        className={`browse-chip browse-chip-toggle ${showAllBrowseYears ? 'is-active' : ''}`}
-                                                        onClick={() => setShowAllBrowseYears((prev) => !prev)}
-                                                    >
-                                                        {showAllBrowseYears ? 'Show Recent Years' : 'View All Years'}
-                                                    </button>
-                                                </div>
-                                                <div className="browse-chip-list browse-chip-list-years">
-                                                    {browseVisibleYears.map((year) => {
-                                                        const isActive = browseSection === 'year' && browseSlug === year;
-                                                        return (
-                                                            <button
-                                                                key={`browse-year-${year}`}
-                                                                type="button"
-                                                                className={`browse-chip ${isActive ? 'is-active' : ''}`}
-                                                                onClick={() => openBrowseYear(year)}
-                                                            >
-                                                                {year}
-                                                            </button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        </section>
-                                        ) : null}
-
-                                        {browseLoading ? (
-                                            <div className="home-feed-loading browse-view-loading">
-                                                <LoadingIndicator />
-                                            </div>
-                                        ) : (
-                                            <>
-                                                {browseNotice ? (
-                                                    <div className="browse-note">{browseNotice}</div>
-                                                ) : null}
-
-                                                {hasBrowseYearTopSection ? (
-                                                    <section className="browse-top-section" aria-label="Top albums">
-                                                        <div className="browse-section-title">{browseTopSectionTitle}</div>
-                                                        <div className="home-card-grid browse-top-grid">
-                                                            {browseTopItems.map((item) => {
-                                                                const fallbackImage = String(item?.icon || '').trim();
-                                                                const cardImage = getLargeThumbUrl(fallbackImage);
-                                                                return (
-                                                                    <HomeAlbumCard
-                                                                        key={`browse-top-${item?.id || item?.url || item?.title || ''}`}
-                                                                        title={String(item?.title || 'Unknown Title')}
-                                                                        imageUrl={cardImage}
-                                                                        artist={String(item?.albumType || '').trim()}
-                                                                        metaLine={String(item?.year || '').trim()}
-                                                                        lightweightTextMode={shouldUseLightweightHomeCardText}
-                                                                        allowProxyFallback={true}
-                                                                        pageShowSignal={pageShowSignal}
-                                                                        selectPayload={item}
-                                                                        onSelect={handleHomeCardSelect}
-                                                                    />
-                                                                );
-                                                            })}
+                                                {shouldShowBrowseToolbar ? (
+                                                    <section className="browse-toolbar" id="browse-shortcuts" aria-label="Browse shortcuts">
+                                                        <div className="browse-group">
+                                                            <div className="browse-group-head">
+                                                                <div className="browse-group-label">Albums</div>
+                                                                <div className="browse-group-hint">Charts and discovery lists</div>
+                                                            </div>
+                                                            <div className="browse-chip-list browse-chip-list-major">
+                                                                {BROWSE_ALBUM_SHORTCUTS.map((option) => {
+                                                                    const isActive = browseSection === option.key;
+                                                                    return (
+                                                                        <button
+                                                                            key={`browse-albums-${option.key}`}
+                                                                            type="button"
+                                                                            className={`browse-chip ${isActive ? 'is-active' : ''}`}
+                                                                            onClick={() => openBrowseSection(option.key)}
+                                                                        >
+                                                                            {option.label}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                        <div className="browse-group">
+                                                            <div className="browse-group-head">
+                                                                <div className="browse-group-label">By Type</div>
+                                                                <div className="browse-group-hint">Filter by release format</div>
+                                                            </div>
+                                                            <div className="browse-chip-list">
+                                                                {BROWSE_TYPE_OPTIONS.map((option) => {
+                                                                    const isActive = browseSection === 'type' && browseSlug === option.slug;
+                                                                    return (
+                                                                        <button
+                                                                            key={`browse-type-${option.slug}`}
+                                                                            type="button"
+                                                                            className={`browse-chip ${isActive ? 'is-active' : ''}`}
+                                                                            onClick={() => openBrowseType(option.slug)}
+                                                                        >
+                                                                            {option.label}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                        <div className="browse-group">
+                                                            <div className="browse-group-head">
+                                                                <div className="browse-group-label">By Year</div>
+                                                                <div className="browse-group-hint">Jump to any release year</div>
+                                                            </div>
+                                                            <div className="browse-year-row">
+                                                                <label className="browse-year-select-label" htmlFor="browse-year-select">
+                                                                    Jump
+                                                                </label>
+                                                                <select
+                                                                    id="browse-year-select"
+                                                                    className="browse-year-select"
+                                                                    value={browseSection === 'year' ? browseSlug : ''}
+                                                                    onChange={(event) => {
+                                                                        const nextYear = String(event.target.value || '').trim();
+                                                                        if (!nextYear) return;
+                                                                        openBrowseYear(nextYear);
+                                                                    }}
+                                                                >
+                                                                    <option value="">Select year</option>
+                                                                    {browseAllYears.map((year) => (
+                                                                        <option key={`browse-year-option-${year}`} value={year}>
+                                                                            {year}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                <button
+                                                                    type="button"
+                                                                    className={`browse-chip browse-chip-toggle ${showAllBrowseYears ? 'is-active' : ''}`}
+                                                                    onClick={() => setShowAllBrowseYears((prev) => !prev)}
+                                                                >
+                                                                    {showAllBrowseYears ? 'Show Recent Years' : 'View All Years'}
+                                                                </button>
+                                                            </div>
+                                                            <div className="browse-chip-list browse-chip-list-years">
+                                                                {browseVisibleYears.map((year) => {
+                                                                    const isActive = browseSection === 'year' && browseSlug === year;
+                                                                    return (
+                                                                        <button
+                                                                            key={`browse-year-${year}`}
+                                                                            type="button"
+                                                                            className={`browse-chip ${isActive ? 'is-active' : ''}`}
+                                                                            onClick={() => openBrowseYear(year)}
+                                                                        >
+                                                                            {year}
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
                                                         </div>
                                                     </section>
                                                 ) : null}
 
-                                                {browseMainSectionTitle ? (
-                                                    <div className="browse-section-title">{browseMainSectionTitle}</div>
-                                                ) : null}
-
-                                                <div ref={homeCardGridRef} className="home-card-grid">
-                                                    {browseItems.length === 0 ? (
-                                                        <div className="home-feed-empty">No albums available in this section.</div>
-                                                    ) : (
-                                                        <>
-                                                            {shouldVirtualizeHomeGrid && virtualHomeGridTopPadding > 0 ? (
-                                                                <div
-                                                                    className="home-grid-virtual-spacer"
-                                                                    aria-hidden="true"
-                                                                    style={{ gridColumn: '1 / -1', height: `${virtualHomeGridTopPadding}px` }}
-                                                                />
-                                                            ) : null}
-                                                            {virtualizedHomeFeedItems.map(({ item, originalIndex }: { item: any; originalIndex: number }) => {
-                                                                const fallbackImage = String(item?.icon || item?.image || '').trim();
-                                                                const cardImage = getLargeThumbUrl(fallbackImage);
-                                                                return (
-                                                                    <HomeAlbumCard
-                                                                        key={`browse-${originalIndex}-${item?.url || ''}`}
-                                                                        title={String(item?.title || 'Unknown Title')}
-                                                                        imageUrl={cardImage}
-                                                                        artist={String(item?.albumType || '').trim()}
-                                                                        metaLine={String(item?.year || '').trim()}
-                                                                        lightweightTextMode={shouldUseLightweightHomeCardText}
-                                                                        allowProxyFallback={true}
-                                                                        pageShowSignal={pageShowSignal}
-                                                                        selectPayload={item}
-                                                                        onSelect={handleHomeCardSelect}
-                                                                    />
-                                                                );
-                                                            })}
-                                                            {shouldVirtualizeHomeGrid && virtualHomeGridBottomPadding > 0 ? (
-                                                                <div
-                                                                    className="home-grid-virtual-spacer"
-                                                                    aria-hidden="true"
-                                                                    style={{ gridColumn: '1 / -1', height: `${virtualHomeGridBottomPadding}px` }}
-                                                                />
-                                                            ) : null}
-                                                        </>
-                                                    )}
-                                                </div>
-
-                                                <div className="browse-footer">
-                                                    <div className="browse-page-status">
-                                                        Page {browsePagination.currentPage} of {browsePagination.totalPages}
+                                                {browseLoading ? (
+                                                    <div className="home-feed-loading browse-view-loading">
+                                                        <LoadingIndicator />
                                                     </div>
-                                                    <div className="browse-page-actions">
-                                                        <button
-                                                            type="button"
-                                                            className="btn-main album-hero-action-btn"
-                                                            disabled={!browsePagination.prevPage || browseLoading}
-                                                            onClick={() => browsePagination.prevPage && loadBrowsePage(browsePagination.prevPage)}
-                                                        >
-                                                            <Icon name="chevronLeft" size={16} />
-                                                            Prev
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className="btn-main album-hero-action-btn"
-                                                            disabled={!browsePagination.nextPage || browseLoading}
-                                                            onClick={() => browsePagination.nextPage && loadBrowsePage(browsePagination.nextPage)}
-                                                        >
-                                                            Next
-                                                            <Icon name="chevronRight" size={16} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            </ViewPanel>
-                            )}
+                                                ) : (
+                                                    <>
+                                                        {browseNotice ? (
+                                                            <div className="browse-note">{browseNotice}</div>
+                                                        ) : null}
 
-                            {view === 'settings' && (
-                            <ViewPanel>
-                                <div className="content-inner">
-                                    <TabHeader
-                                        title="Settings"
-                                        subtitle="Tune app behavior and download defaults"
-                                        density="compact"
-                                    />
-                                    <SettingsView currentQ={qualityPref} onSetQ={updateQuality} />
-                                </div>
-                            </ViewPanel>
-                            )}
+                                                        {hasBrowseYearTopSection ? (
+                                                            <section className="browse-top-section" aria-label="Top albums">
+                                                                <div className="browse-section-title">{browseTopSectionTitle}</div>
+                                                                <div className="home-card-grid browse-top-grid">
+                                                                    {browseTopItems.map((item) => {
+                                                                        const fallbackImage = String(item?.icon || '').trim();
+                                                                        const cardImage = getLargeThumbUrl(fallbackImage);
+                                                                        return (
+                                                                            <HomeAlbumCard
+                                                                                key={`browse-top-${item?.id || item?.url || item?.title || ''}`}
+                                                                                title={String(item?.title || 'Unknown Title')}
+                                                                                imageUrl={cardImage}
+                                                                                artist={String(item?.albumType || '').trim()}
+                                                                                metaLine={String(item?.year || '').trim()}
+                                                                                lightweightTextMode={shouldUseLightweightHomeCardText}
+                                                                                allowProxyFallback={true}
+                                                                                pageShowSignal={pageShowSignal}
+                                                                                selectPayload={item}
+                                                                                onSelect={handleHomeCardSelect}
+                                                                            />
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            </section>
+                                                        ) : null}
 
-                            {view === 'queue' && (
-                            <ViewPanel>
-                                <div className="content-inner">
-                                    <button
-                                        type="button"
-                                        className="queue-page-mobile-back mobile-only"
-                                        onClick={navigateBackOrHome}
-                                        aria-label="Go back"
-                                    >
-                                        <Icon name="arrowLeft" size={14} />
-                                        Back
-                                    </button>
-                                    <TabHeader
-                                        title="Download Queue"
-                                        subtitle="Track active, pending, and completed downloads"
-                                        density="compact"
-                                    />
-                                    <QueueView />
-                                </div>
-                            </ViewPanel>
-                            )}
+                                                        {browseMainSectionTitle ? (
+                                                            <div className="browse-section-title">{browseMainSectionTitle}</div>
+                                                        ) : null}
 
-                            {view === 'playlists' && (
-                            <ViewPanel>
-                                <PlaylistsView
-                                    playlists={playlists}
-                                    selectedPlaylistId={selectedPlaylistId}
-                                    onSelectPlaylist={(playlistId) => setSelectedPlaylistId(playlistId)}
-                                    isIdentifierView={isPlaylistIdentifierPage}
-                                    routeIdentifier={playlistRouteIdentifier}
-                                    onOpenPlaylistIdentifier={(playlistId) => openPlaylistIdentifierView(playlistId, { historyMode: 'push' })}
-                                    onBackToPlaylists={() => navigatePlaylistsHome({ historyMode: 'push' })}
-                                    onCreatePlaylist={createPlaylist}
-                                    onRenamePlaylist={renamePlaylist}
-                                    onDeletePlaylist={deletePlaylist}
-                                    onPlayPlaylist={playPlaylist}
-                                    onPlayTrackFromPlaylist={playPlaylistTrack}
-                                    isSharedIdentifierView={isSharedPlaylistIdentifierPage}
-                                    sharedPlaylistStatus={sharedPlaylistStatus}
-                                    sharedPlaylistRecord={sharedPlaylistData}
-                                    onPlaySharedPlaylist={playSharedPlaylist}
-                                    onPlayTrackFromSharedPlaylist={playTrackFromSharedPlaylist}
-                                    onImportSharedPlaylist={() => importSharedPlaylist({ historyMode: 'push' })}
-                                    onRemoveTrack={removePlaylistTrack}
-                                    onMoveTrack={movePlaylistTrack}
-                                    onExportPlaylists={exportPlaylists}
-                                    onExportPlaylist={exportSinglePlaylist}
-                                    onSharePlaylist={createPlaylistShareLink}
-                                    onDownloadPlaylistZip={downloadPlaylistAsZip}
-                                    onImportPlaylists={() => playlistImportInputRef.current?.click()}
-                                    onAddTrackToPlaylist={handleAddTrackToPlaylist}
-                                    onShareTrack={handleShareTrackLink}
-                                    onDownloadTrack={addToQueue}
-                                    onAddTrackToQueue={addTrackToPlaybackQueue}
-                                    getTrackDownloadProgress={getTrackDownloadProgress}
-                                    trackHasRecentPlaylistAdd={trackHasRecentPlaylistAdd}
-                                    onOpenTrackAlbum={openTrackAlbumFromTrack}
-                                />
-                                <input
-                                    type="file"
-                                    ref={playlistImportInputRef}
-                                    style={{ display: 'none' }}
-                                    accept=".json"
-                                    onChange={importPlaylists}
-                                />
-                                {playlistStorageWarning ? (
-                                    <div className="playlists-storage-warning">{playlistStorageWarning}</div>
-                                ) : null}
-                            </ViewPanel>
-                            )}
-
-                            {view === 'liked' && (
-                            <div style={{ height: '100%' }}>
-                                <div className="content-inner">
-                                    <TabHeader
-                                        title="Liked Songs"
-                                        subtitle={`${likedTracks.length} Saved Tracks - Stored Locally`}
-                                        actions={(
-                                            <div className="btn-action-group">
-                                                <button className="btn-main album-hero-action-btn album-hero-pill-btn" onClick={exportLikes}>
-                                                    <Icon name="download" size={16} /> Export Likes
-                                                </button>
-                                                <button className="btn-main album-hero-action-btn album-hero-pill-btn" onClick={() => fileInputRef.current?.click()}>
-                                                    <Icon name="upload" size={16} /> Import Likes
-                                                </button>
-                                                <input
-                                                    type="file"
-                                                    ref={fileInputRef}
-                                                    style={{ display: 'none' }}
-                                                    accept=".json"
-                                                    onChange={importLikes}
-                                                />
-                                            </div>
-                                        )}
-                                    />
-                                    <div className="liked-list">
-                                        {likedTracks.length === 0 ? (
-                                            <div className="empty-state">
-                                                <Icon name="heart" size={48} />
-                                                <p style={{ marginTop: '1rem', fontFamily: 'Mate SC' }}>No liked songs yet.</p>
-                                            </div>
-                                        ) : (
-                                            likedRows.map((row, rowIdx) => {
-                                                const expandedIndex = row.findIndex((group) => getLikedGroupKey(group) === likedExpandedKey);
-                                                const expandedGroup = expandedIndex !== -1 ? row[expandedIndex] : null;
-                                                const expandedMetaCacheKey = expandedGroup ? getLikedMetaCacheKey(expandedGroup) : null;
-                                                const expandedMeta = expandedMetaCacheKey ? likedAlbumMetaCache[expandedMetaCacheKey] : null;
-                                                const expandedLoading = expandedMetaCacheKey ? !!likedAlbumMetaLoading[expandedMetaCacheKey] : false;
-                                                const expandedMetaError = expandedMetaCacheKey ? likedAlbumMetaError[expandedMetaCacheKey] : '';
-                                                const expandedAlbumCandidates = expandedGroup ? getLikedGroupAlbumFetchCandidates(expandedGroup) : [];
-                                                const expandedOpenAlbumUrl = expandedAlbumCandidates[0] || '';
-                                                const arrowLeft = expandedIndex === -1
-                                                    ? '50%'
-                                                    : `${((expandedIndex + 0.5) / likedGridColumns) * 100}%`;
-                                                const expandedArtist =
-                                                    expandedMeta?.primaryArtist ||
-                                                    expandedMeta?.albumArtist ||
-                                                    expandedMeta?.composers ||
-                                                    expandedMeta?.developers ||
-                                                    expandedMeta?.publisher ||
-                                                    (expandedGroup ? getLikedArtistFallback(expandedGroup) : 'Unknown Artist');
-                                                const expandedTypeYear = [expandedMeta?.albumType, expandedMeta?.year]
-                                                    .filter(Boolean)
-                                                    .map((part) => String(part))
-                                                    .join(' · ');
-
-                                                return (
-                                                    <React.Fragment key={`liked-row-${rowIdx}`}>
-                                                        <div
-                                                            className="liked-album-grid-row"
-                                                            style={{ gridTemplateColumns: `repeat(${likedGridColumns}, minmax(0, 1fr))` }}
-                                                        >
-                                                            {row.map((group) => {
-                                                                const groupKey = getLikedGroupKey(group);
-                                                                const isOpen = groupKey === likedExpandedKey;
-                                                                return (
-                                                                    <button
-                                                                        key={groupKey}
-                                                                        type="button"
-                                                                        className={`liked-album-card ${isOpen ? 'is-open' : ''}`}
-                                                                        onClick={() => setLikedExpandedKey((prev) => (prev === groupKey ? null : groupKey))}
-                                                                    >
-                                                                        <div className="liked-album-card-art">
-                                                                            {group.albumArt ? (
-                                                                                <img
-                                                                                    src={group.albumArt}
-                                                                                    referrerPolicy="no-referrer"
-                                                                                    loading="lazy"
-                                                                                    fetchPriority="low"
-                                                                                    alt=""
-                                                                                    onError={(e: any) => {
-                                                                                        if (group.albumArt && !e.target.src.includes('/api/image')) {
-                                                                                            e.target.src = `/api/image?url=${encodeURIComponent(group.albumArt)}`;
-                                                                                        }
-                                                                                    }}
-                                                                                />
-                                                                            ) : (
-                                                                                <div className="liked-album-card-art-fallback">
-                                                                                    <Icon name="headphones" size={26} />
-                                                                                </div>
-                                                                            )}
-                                                                            <span
-                                                                                className="liked-album-card-play"
-                                                                                title="Play all tracks from this album"
-                                                                                aria-label={`Play all tracks from ${group.albumName}`}
-                                                                                onClick={(e) => {
-                                                                                    e.preventDefault();
-                                                                                    e.stopPropagation();
-                                                                                    playLikedAlbumAll(group);
-                                                                                }}
-                                                                            >
-                                                                                <Icon name="play" size={14} />
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="liked-album-card-copy">
-                                                                            <div className="liked-album-card-title">{group.albumName}</div>
-                                                                            <div className="liked-album-card-sub">{group.tracks.length} tracks</div>
-                                                                        </div>
-                                                                    </button>
-                                                                );
-                                                            })}
+                                                        <div ref={homeCardGridRef} className="home-card-grid">
+                                                            {browseItems.length === 0 ? (
+                                                                <div className="home-feed-empty">No albums available in this section.</div>
+                                                            ) : (
+                                                                <>
+                                                                    {shouldVirtualizeHomeGrid && virtualHomeGridTopPadding > 0 ? (
+                                                                        <div
+                                                                            className="home-grid-virtual-spacer"
+                                                                            aria-hidden="true"
+                                                                            style={{ gridColumn: '1 / -1', height: `${virtualHomeGridTopPadding}px` }}
+                                                                        />
+                                                                    ) : null}
+                                                                    {virtualizedHomeFeedItems.map(({ item, originalIndex }: { item: any; originalIndex: number }) => {
+                                                                        const fallbackImage = String(item?.icon || item?.image || '').trim();
+                                                                        const cardImage = getLargeThumbUrl(fallbackImage);
+                                                                        return (
+                                                                            <HomeAlbumCard
+                                                                                key={`browse-${originalIndex}-${item?.url || ''}`}
+                                                                                title={String(item?.title || 'Unknown Title')}
+                                                                                imageUrl={cardImage}
+                                                                                artist={String(item?.albumType || '').trim()}
+                                                                                metaLine={String(item?.year || '').trim()}
+                                                                                lightweightTextMode={shouldUseLightweightHomeCardText}
+                                                                                allowProxyFallback={true}
+                                                                                pageShowSignal={pageShowSignal}
+                                                                                selectPayload={item}
+                                                                                onSelect={handleHomeCardSelect}
+                                                                            />
+                                                                        );
+                                                                    })}
+                                                                    {shouldVirtualizeHomeGrid && virtualHomeGridBottomPadding > 0 ? (
+                                                                        <div
+                                                                            className="home-grid-virtual-spacer"
+                                                                            aria-hidden="true"
+                                                                            style={{ gridColumn: '1 / -1', height: `${virtualHomeGridBottomPadding}px` }}
+                                                                        />
+                                                                    ) : null}
+                                                                </>
+                                                            )}
                                                         </div>
 
-                                                        {expandedGroup && (
-                                                            <div className="liked-expand-panel" style={{ ['--liked-arrow-left' as any]: arrowLeft }}>
-                                                                <div className="liked-expand-arrow" aria-hidden="true"></div>
-                                                                <div className="liked-expand-shell">
-                                                                    <div className="liked-expand-cover">
-                                                                        {expandedGroup.albumArt ? (
-                                                                            <img
-                                                                                src={expandedGroup.albumArt}
-                                                                                referrerPolicy="no-referrer"
-                                                                                loading="lazy"
-                                                                                fetchPriority="low"
-                                                                                alt=""
-                                                                                onError={(e: any) => {
-                                                                                    if (expandedGroup.albumArt && !e.target.src.includes('/api/image')) {
-                                                                                        e.target.src = `/api/image?url=${encodeURIComponent(expandedGroup.albumArt)}`;
-                                                                                    }
-                                                                                }}
-                                                                            />
-                                                                        ) : (
-                                                                            <div className="liked-expand-cover-fallback">
-                                                                                <Icon name="headphones" size={32} />
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
+                                                        <div className="browse-footer">
+                                                            <div className="browse-page-status">
+                                                                Page {browsePagination.currentPage} of {browsePagination.totalPages}
+                                                            </div>
+                                                            <div className="browse-page-actions">
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-main album-hero-action-btn"
+                                                                    disabled={!browsePagination.prevPage || browseLoading}
+                                                                    onClick={() => browsePagination.prevPage && loadBrowsePage(browsePagination.prevPage)}
+                                                                >
+                                                                    <Icon name="chevronLeft" size={16} />
+                                                                    Prev
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn-main album-hero-action-btn"
+                                                                    disabled={!browsePagination.nextPage || browseLoading}
+                                                                    onClick={() => browsePagination.nextPage && loadBrowsePage(browsePagination.nextPage)}
+                                                                >
+                                                                    Next
+                                                                    <Icon name="chevronRight" size={16} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </ViewPanel>
+                                )}
 
-                                                                    <div className="liked-expand-divider"></div>
+                                {view === 'settings' && (
+                                    <ViewPanel>
+                                        <div className="content-inner">
+                                            <TabHeader
+                                                title="Settings"
+                                                subtitle="Tune app behavior and download defaults"
+                                                density="compact"
+                                            />
+                                            <SettingsView currentQ={qualityPref} onSetQ={updateQuality} />
+                                        </div>
+                                    </ViewPanel>
+                                )}
 
-                                                                    <div className="liked-expand-content">
-                                                                        <div className="liked-expand-header">
-                                                                            <div className="liked-expand-title-row">
-                                                                                <h2 className="liked-expand-title">{expandedMeta?.name || expandedGroup.albumName}</h2>
-                                                                                {expandedOpenAlbumUrl && (
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        className="liked-open-album-btn"
+                                {view === 'queue' && (
+                                    <ViewPanel>
+                                        <div className="content-inner">
+                                            <button
+                                                type="button"
+                                                className="queue-page-mobile-back mobile-only"
+                                                onClick={navigateBackOrHome}
+                                                aria-label="Go back"
+                                            >
+                                                <Icon name="arrowLeft" size={14} />
+                                                Back
+                                            </button>
+                                            <TabHeader
+                                                title="Download Queue"
+                                                subtitle="Track active, pending, and completed downloads"
+                                                density="compact"
+                                            />
+                                            <QueueView />
+                                        </div>
+                                    </ViewPanel>
+                                )}
+
+                                {view === 'playlists' && (
+                                    <ViewPanel>
+                                        <PlaylistsView
+                                            playlists={playlists}
+                                            selectedPlaylistId={selectedPlaylistId}
+                                            onSelectPlaylist={(playlistId) => setSelectedPlaylistId(playlistId)}
+                                            isIdentifierView={isPlaylistIdentifierPage}
+                                            routeIdentifier={playlistRouteIdentifier}
+                                            onOpenPlaylistIdentifier={(playlistId) => openPlaylistIdentifierView(playlistId, { historyMode: 'push' })}
+                                            onBackToPlaylists={() => navigatePlaylistsHome({ historyMode: 'push' })}
+                                            onCreatePlaylist={createPlaylist}
+                                            onRenamePlaylist={renamePlaylist}
+                                            onDeletePlaylist={deletePlaylist}
+                                            onPlayPlaylist={playPlaylist}
+                                            onPlayTrackFromPlaylist={playPlaylistTrack}
+                                            isSharedIdentifierView={isSharedPlaylistIdentifierPage}
+                                            sharedPlaylistStatus={sharedPlaylistStatus}
+                                            sharedPlaylistRecord={sharedPlaylistData}
+                                            onPlaySharedPlaylist={playSharedPlaylist}
+                                            onPlayTrackFromSharedPlaylist={playTrackFromSharedPlaylist}
+                                            onImportSharedPlaylist={() => importSharedPlaylist({ historyMode: 'push' })}
+                                            onRemoveTrack={removePlaylistTrack}
+                                            onMoveTrack={movePlaylistTrack}
+                                            onExportPlaylists={exportPlaylists}
+                                            onExportPlaylist={exportSinglePlaylist}
+                                            onSharePlaylist={createPlaylistShareLink}
+                                            onDownloadPlaylistZip={downloadPlaylistAsZip}
+                                            onImportPlaylists={() => playlistImportInputRef.current?.click()}
+                                            onAddTrackToPlaylist={handleAddTrackToPlaylist}
+                                            onShareTrack={handleShareTrackLink}
+                                            onDownloadTrack={addToQueue}
+                                            onAddTrackToQueue={addTrackToPlaybackQueue}
+                                            getTrackDownloadProgress={getTrackDownloadProgress}
+                                            trackHasRecentPlaylistAdd={trackHasRecentPlaylistAdd}
+                                            onOpenTrackAlbum={openTrackAlbumFromTrack}
+                                        />
+                                        <input
+                                            type="file"
+                                            ref={playlistImportInputRef}
+                                            style={{ display: 'none' }}
+                                            accept=".json"
+                                            onChange={importPlaylists}
+                                        />
+                                        {playlistStorageWarning ? (
+                                            <div className="playlists-storage-warning">{playlistStorageWarning}</div>
+                                        ) : null}
+                                    </ViewPanel>
+                                )}
+
+                                {view === 'liked' && (
+                                    <div style={{ height: '100%' }}>
+                                        <div className="content-inner">
+                                            <TabHeader
+                                                title="Liked Songs"
+                                                subtitle={`${likedTracks.length} Saved Tracks - Stored Locally`}
+                                                actions={(
+                                                    <div className="btn-action-group">
+                                                        <button className="btn-main album-hero-action-btn album-hero-pill-btn" onClick={exportLikes}>
+                                                            <Icon name="download" size={16} /> Export Likes
+                                                        </button>
+                                                        <button className="btn-main album-hero-action-btn album-hero-pill-btn" onClick={() => fileInputRef.current?.click()}>
+                                                            <Icon name="upload" size={16} /> Import Likes
+                                                        </button>
+                                                        <input
+                                                            type="file"
+                                                            ref={fileInputRef}
+                                                            style={{ display: 'none' }}
+                                                            accept=".json"
+                                                            onChange={importLikes}
+                                                        />
+                                                    </div>
+                                                )}
+                                            />
+                                            <div className="liked-list">
+                                                {likedTracks.length === 0 ? (
+                                                    <div className="empty-state">
+                                                        <Icon name="heart" size={48} />
+                                                        <p style={{ marginTop: '1rem', fontFamily: 'Mate SC' }}>No liked songs yet.</p>
+                                                    </div>
+                                                ) : (
+                                                    likedRows.map((row, rowIdx) => {
+                                                        const expandedIndex = row.findIndex((group) => getLikedGroupKey(group) === likedExpandedKey);
+                                                        const expandedGroup = expandedIndex !== -1 ? row[expandedIndex] : null;
+                                                        const expandedMetaCacheKey = expandedGroup ? getLikedMetaCacheKey(expandedGroup) : null;
+                                                        const expandedMeta = expandedMetaCacheKey ? likedAlbumMetaCache[expandedMetaCacheKey] : null;
+                                                        const expandedLoading = expandedMetaCacheKey ? !!likedAlbumMetaLoading[expandedMetaCacheKey] : false;
+                                                        const expandedMetaError = expandedMetaCacheKey ? likedAlbumMetaError[expandedMetaCacheKey] : '';
+                                                        const expandedAlbumCandidates = expandedGroup ? getLikedGroupAlbumFetchCandidates(expandedGroup) : [];
+                                                        const expandedOpenAlbumUrl = expandedAlbumCandidates[0] || '';
+                                                        const arrowLeft = expandedIndex === -1
+                                                            ? '50%'
+                                                            : `${((expandedIndex + 0.5) / likedGridColumns) * 100}%`;
+                                                        const expandedArtist =
+                                                            expandedMeta?.primaryArtist ||
+                                                            expandedMeta?.albumArtist ||
+                                                            expandedMeta?.composers ||
+                                                            expandedMeta?.developers ||
+                                                            expandedMeta?.publisher ||
+                                                            (expandedGroup ? getLikedArtistFallback(expandedGroup) : 'Unknown Artist');
+                                                        const expandedTypeYear = [expandedMeta?.albumType, expandedMeta?.year]
+                                                            .filter(Boolean)
+                                                            .map((part) => String(part))
+                                                            .join(' · ');
+
+                                                        return (
+                                                            <React.Fragment key={`liked-row-${rowIdx}`}>
+                                                                <div
+                                                                    className="liked-album-grid-row"
+                                                                    style={{ gridTemplateColumns: `repeat(${likedGridColumns}, minmax(0, 1fr))` }}
+                                                                >
+                                                                    {row.map((group) => {
+                                                                        const groupKey = getLikedGroupKey(group);
+                                                                        const isOpen = groupKey === likedExpandedKey;
+                                                                        return (
+                                                                            <button
+                                                                                key={groupKey}
+                                                                                type="button"
+                                                                                className={`liked-album-card ${isOpen ? 'is-open' : ''}`}
+                                                                                onClick={() => setLikedExpandedKey((prev) => (prev === groupKey ? null : groupKey))}
+                                                                            >
+                                                                                <div className="liked-album-card-art">
+                                                                                    {group.albumArt ? (
+                                                                                        <img
+                                                                                            src={group.albumArt}
+                                                                                            referrerPolicy="no-referrer"
+                                                                                            loading="lazy"
+                                                                                            fetchPriority="low"
+                                                                                            alt=""
+                                                                                            onError={(e: any) => {
+                                                                                                if (group.albumArt && !e.target.src.includes('/api/image')) {
+                                                                                                    e.target.src = `/api/image?url=${encodeURIComponent(group.albumArt)}`;
+                                                                                                }
+                                                                                            }}
+                                                                                        />
+                                                                                    ) : (
+                                                                                        <div className="liked-album-card-art-fallback">
+                                                                                            <Icon name="headphones" size={26} />
+                                                                                        </div>
+                                                                                    )}
+                                                                                    <span
+                                                                                        className="liked-album-card-play"
+                                                                                        title="Play all tracks from this album"
+                                                                                        aria-label={`Play all tracks from ${group.albumName}`}
                                                                                         onClick={(e) => {
+                                                                                            e.preventDefault();
                                                                                             e.stopPropagation();
-                                                                                            handleAlbumClick(
-                                                                                                expandedOpenAlbumUrl,
-                                                                                                expandedAlbumCandidates,
-                                                                                                expandedGroup.albumName,
-                                                                                                expandedMeta?.albumId || expandedGroup.albumId || ''
-                                                                                            );
+                                                                                            playLikedAlbumAll(group);
                                                                                         }}
                                                                                     >
-                                                                                        Open Album
-                                                                                    </button>
+                                                                                        <Icon name="play" size={14} />
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="liked-album-card-copy">
+                                                                                    <div className="liked-album-card-title">{group.albumName}</div>
+                                                                                    <div className="liked-album-card-sub">{group.tracks.length} tracks</div>
+                                                                                </div>
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+
+                                                                {expandedGroup && (
+                                                                    <div className="liked-expand-panel" style={{ ['--liked-arrow-left' as any]: arrowLeft }}>
+                                                                        <div className="liked-expand-arrow" aria-hidden="true"></div>
+                                                                        <div className="liked-expand-shell">
+                                                                            <div className="liked-expand-cover">
+                                                                                {expandedGroup.albumArt ? (
+                                                                                    <img
+                                                                                        src={expandedGroup.albumArt}
+                                                                                        referrerPolicy="no-referrer"
+                                                                                        loading="lazy"
+                                                                                        fetchPriority="low"
+                                                                                        alt=""
+                                                                                        onError={(e: any) => {
+                                                                                            if (expandedGroup.albumArt && !e.target.src.includes('/api/image')) {
+                                                                                                e.target.src = `/api/image?url=${encodeURIComponent(expandedGroup.albumArt)}`;
+                                                                                            }
+                                                                                        }}
+                                                                                    />
+                                                                                ) : (
+                                                                                    <div className="liked-expand-cover-fallback">
+                                                                                        <Icon name="headphones" size={32} />
+                                                                                    </div>
                                                                                 )}
                                                                             </div>
-                                                                            <div className="liked-expand-artist">{expandedArtist}</div>
-                                                                            <div className="liked-expand-meta">
-                                                                                {expandedLoading
-                                                                                    ? 'Loading album details...'
-                                                                                    : (expandedTypeYear || (expandedMetaError ? 'Metadata unavailable' : `${expandedGroup.tracks.length} tracks`))}
+
+                                                                            <div className="liked-expand-divider"></div>
+
+                                                                            <div className="liked-expand-content">
+                                                                                <div className="liked-expand-header">
+                                                                                    <div className="liked-expand-title-row">
+                                                                                        <h2 className="liked-expand-title">{expandedMeta?.name || expandedGroup.albumName}</h2>
+                                                                                        {expandedOpenAlbumUrl && (
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                className="liked-open-album-btn"
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    handleAlbumClick(
+                                                                                                        expandedOpenAlbumUrl,
+                                                                                                        expandedAlbumCandidates,
+                                                                                                        expandedGroup.albumName,
+                                                                                                        expandedMeta?.albumId || expandedGroup.albumId || ''
+                                                                                                    );
+                                                                                                }}
+                                                                                            >
+                                                                                                Open Album
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <div className="liked-expand-artist">{expandedArtist}</div>
+                                                                                    <div className="liked-expand-meta">
+                                                                                        {expandedLoading
+                                                                                            ? 'Loading album details...'
+                                                                                            : (expandedTypeYear || (expandedMetaError ? 'Metadata unavailable' : `${expandedGroup.tracks.length} tracks`))}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                <div
+                                                                                    className={`liked-expand-tracklist ${shouldVirtualizeLikedExpand ? 'is-virtualized' : ''}`}
+                                                                                    ref={likedExpandTracklistRef}
+                                                                                >
+                                                                                    {shouldVirtualizeLikedExpand && likedExpandVirtualTopPadding > 0 ? (
+                                                                                        <div
+                                                                                            className="liked-expand-virtual-spacer"
+                                                                                            aria-hidden="true"
+                                                                                            style={{ height: `${likedExpandVirtualTopPadding}px` }}
+                                                                                        />
+                                                                                    ) : null}
+                                                                                    {(shouldVirtualizeLikedExpand
+                                                                                        ? visibleExpandedLikedTracks
+                                                                                        : expandedGroup.tracks.map((track: any, originalIndex: number) => ({ track, originalIndex }))
+                                                                                    ).map(({ track: t, originalIndex }: { track: any; originalIndex: number }) => {
+                                                                                        const isCurrent =
+                                                                                            !!currentTrack && (
+                                                                                                (currentTrack.url && t.url && currentTrack.url === t.url) ||
+                                                                                                (currentTrack.title === t.title && currentTrack.albumName === expandedGroup.albumName)
+                                                                                            );
+                                                                                        const trackDownloadProgress = getTrackDownloadProgress(t);
+                                                                                        const isPlaylistAdded = trackHasRecentPlaylistAdd(t);
+                                                                                        return (
+                                                                                            <div
+                                                                                                key={t.url || `${originalIndex}-${t.title}`}
+                                                                                                className={`liked-expand-track-row ${isCurrent ? 'is-current' : ''}`}
+                                                                                                onClick={() => {
+                                                                                                    const playbackTracks = prepareLikedTracksForPlayback(expandedGroup);
+                                                                                                    const nextTrack =
+                                                                                                        playbackTracks.find((pt: any) => pt.url && pt.url === t.url) ||
+                                                                                                        playbackTracks[originalIndex] ||
+                                                                                                        normalizeLikedTrack(t);
+                                                                                                    playTrack(nextTrack, playbackTracks);
+                                                                                                }}
+                                                                                            >
+                                                                                                {trackDownloadProgress !== undefined && (
+                                                                                                    <div className="track-progress-fill" style={{ width: `${trackDownloadProgress}%` }} />
+                                                                                                )}
+                                                                                                <div className="liked-expand-track-num">
+                                                                                                    {isCurrent && isPlaying ? (
+                                                                                                        <span className="liked-track-eq now-playing-bars playing" aria-hidden="true">
+                                                                                                            <span></span>
+                                                                                                            <span></span>
+                                                                                                            <span></span>
+                                                                                                        </span>
+                                                                                                    ) : (
+                                                                                                        t.number || originalIndex + 1
+                                                                                                    )}
+                                                                                                </div>
+                                                                                                <div className="liked-expand-track-text">
+                                                                                                    <div className="liked-expand-track-title">{t.title}</div>
+                                                                                                    <div className="liked-expand-track-sub">{expandedArtist}</div>
+                                                                                                </div>
+                                                                                                <div className="liked-expand-track-dur">{t.duration || '--:--'}</div>
+                                                                                                <div className="t-act liked-expand-track-actions">
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        className={`btn-mini btn-playlist ${isPlaylistAdded ? 'is-feedback' : ''}`}
+                                                                                                        onClick={(event) => {
+                                                                                                            event.preventDefault();
+                                                                                                            event.stopPropagation();
+                                                                                                            handleAddTrackToPlaylist(t);
+                                                                                                        }}
+                                                                                                        title={isPlaylistAdded ? "Added to Playlist" : "Add to Playlist"}
+                                                                                                        aria-label={isPlaylistAdded ? "Added to playlist" : "Add to playlist"}
+                                                                                                    >
+                                                                                                        <Icon name={isPlaylistAdded ? "doubleCheck" : "plus"} size={15} />
+                                                                                                    </button>
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        className="btn-mini btn-share"
+                                                                                                        onClick={(event) => {
+                                                                                                            event.preventDefault();
+                                                                                                            event.stopPropagation();
+                                                                                                            handleShareTrackLink(t);
+                                                                                                        }}
+                                                                                                        title="Share track link"
+                                                                                                        aria-label="Share track link"
+                                                                                                    >
+                                                                                                        <Icon name="link" size={14} />
+                                                                                                    </button>
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        className="btn-mini btn-queue"
+                                                                                                        onClick={(event) => {
+                                                                                                            event.preventDefault();
+                                                                                                            event.stopPropagation();
+                                                                                                            addTrackToPlaybackQueue(t);
+                                                                                                        }}
+                                                                                                        title="Add to Manual Queue"
+                                                                                                        aria-label="Add to manual queue"
+                                                                                                    >
+                                                                                                        <Icon name="list" size={14} />
+                                                                                                    </button>
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        className="btn-mini btn-download"
+                                                                                                        onClick={(event) => {
+                                                                                                            event.preventDefault();
+                                                                                                            event.stopPropagation();
+                                                                                                            addToQueue(t);
+                                                                                                        }}
+                                                                                                        title="Download Track"
+                                                                                                        aria-label="Download track"
+                                                                                                    >
+                                                                                                        <Icon name="download" size={14} />
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        );
+                                                                                    })}
+                                                                                    {shouldVirtualizeLikedExpand && likedExpandVirtualBottomPadding > 0 ? (
+                                                                                        <div
+                                                                                            className="liked-expand-virtual-spacer"
+                                                                                            aria-hidden="true"
+                                                                                            style={{ height: `${likedExpandVirtualBottomPadding}px` }}
+                                                                                        />
+                                                                                    ) : null}
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-
-                                                                        <div
-                                                                            className={`liked-expand-tracklist ${shouldVirtualizeLikedExpand ? 'is-virtualized' : ''}`}
-                                                                            ref={likedExpandTracklistRef}
-                                                                        >
-                                                                            {shouldVirtualizeLikedExpand && likedExpandVirtualTopPadding > 0 ? (
-                                                                                <div
-                                                                                    className="liked-expand-virtual-spacer"
-                                                                                    aria-hidden="true"
-                                                                                    style={{ height: `${likedExpandVirtualTopPadding}px` }}
-                                                                                />
-                                                                            ) : null}
-                                                                            {(shouldVirtualizeLikedExpand
-                                                                                ? visibleExpandedLikedTracks
-                                                                                : expandedGroup.tracks.map((track: any, originalIndex: number) => ({ track, originalIndex }))
-                                                                            ).map(({ track: t, originalIndex }: { track: any; originalIndex: number }) => {
-                                                                                const isCurrent =
-                                                                                    !!currentTrack && (
-                                                                                        (currentTrack.url && t.url && currentTrack.url === t.url) ||
-                                                                                        (currentTrack.title === t.title && currentTrack.albumName === expandedGroup.albumName)
-                                                                                    );
-                                                                                const trackDownloadProgress = getTrackDownloadProgress(t);
-                                                                                const isPlaylistAdded = trackHasRecentPlaylistAdd(t);
-                                                                                return (
-                                                                                    <div
-                                                                                        key={t.url || `${originalIndex}-${t.title}`}
-                                                                                        className={`liked-expand-track-row ${isCurrent ? 'is-current' : ''}`}
-                                                                                        onClick={() => {
-                                                                                            const playbackTracks = prepareLikedTracksForPlayback(expandedGroup);
-                                                                                            const nextTrack =
-                                                                                                playbackTracks.find((pt: any) => pt.url && pt.url === t.url) ||
-                                                                                                playbackTracks[originalIndex] ||
-                                                                                                normalizeLikedTrack(t);
-                                                                                            playTrack(nextTrack, playbackTracks);
-                                                                                        }}
-                                                                                    >
-                                                                                        {trackDownloadProgress !== undefined && (
-                                                                                            <div className="track-progress-fill" style={{ width: `${trackDownloadProgress}%` }} />
-                                                                                        )}
-                                                                                        <div className="liked-expand-track-num">
-                                                                                            {isCurrent && isPlaying ? (
-                                                                                                <span className="liked-track-eq now-playing-bars playing" aria-hidden="true">
-                                                                                                    <span></span>
-                                                                                                    <span></span>
-                                                                                                    <span></span>
-                                                                                                </span>
-                                                                                            ) : (
-                                                                                                t.number || originalIndex + 1
-                                                                                            )}
-                                                                                        </div>
-                                                                                        <div className="liked-expand-track-text">
-                                                                                            <div className="liked-expand-track-title">{t.title}</div>
-                                                                                            <div className="liked-expand-track-sub">{expandedArtist}</div>
-                                                                                        </div>
-                                                                                        <div className="liked-expand-track-dur">{t.duration || '--:--'}</div>
-                                                                                        <div className="t-act liked-expand-track-actions">
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                className={`btn-mini btn-playlist ${isPlaylistAdded ? 'is-feedback' : ''}`}
-                                                                                                onClick={(event) => {
-                                                                                                    event.preventDefault();
-                                                                                                    event.stopPropagation();
-                                                                                                    handleAddTrackToPlaylist(t);
-                                                                                                }}
-                                                                                                title={isPlaylistAdded ? "Added to Playlist" : "Add to Playlist"}
-                                                                                                aria-label={isPlaylistAdded ? "Added to playlist" : "Add to playlist"}
-                                                                                            >
-                                                                                                <Icon name={isPlaylistAdded ? "doubleCheck" : "plus"} size={15} />
-                                                                                            </button>
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                className="btn-mini btn-share"
-                                                                                                onClick={(event) => {
-                                                                                                    event.preventDefault();
-                                                                                                    event.stopPropagation();
-                                                                                                    handleShareTrackLink(t);
-                                                                                                }}
-                                                                                                title="Share track link"
-                                                                                                aria-label="Share track link"
-                                                                                            >
-                                                                                                <Icon name="link" size={14} />
-                                                                                            </button>
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                className="btn-mini btn-queue"
-                                                                                                onClick={(event) => {
-                                                                                                    event.preventDefault();
-                                                                                                    event.stopPropagation();
-                                                                                                    addTrackToPlaybackQueue(t);
-                                                                                                }}
-                                                                                                title="Add to Manual Queue"
-                                                                                                aria-label="Add to manual queue"
-                                                                                            >
-                                                                                                <Icon name="list" size={14} />
-                                                                                            </button>
-                                                                                            <button
-                                                                                                type="button"
-                                                                                                className="btn-mini btn-download"
-                                                                                                onClick={(event) => {
-                                                                                                    event.preventDefault();
-                                                                                                    event.stopPropagation();
-                                                                                                    addToQueue(t);
-                                                                                                }}
-                                                                                                title="Download Track"
-                                                                                                aria-label="Download track"
-                                                                                            >
-                                                                                                <Icon name="download" size={14} />
-                                                                                            </button>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                );
-                                                                            })}
-                                                                            {shouldVirtualizeLikedExpand && likedExpandVirtualBottomPadding > 0 ? (
-                                                                                <div
-                                                                                    className="liked-expand-virtual-spacer"
-                                                                                    aria-hidden="true"
-                                                                                    style={{ height: `${likedExpandVirtualBottomPadding}px` }}
-                                                                                />
-                                                                            ) : null}
-                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </React.Fragment>
-                                                );
-                                            })
-                                        )}
+                                                                )}
+                                                            </React.Fragment>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
-                            )}
                         </div>
                     </div>
-                </div>
                 </div>
                 <Player
                     track={currentTrack}
