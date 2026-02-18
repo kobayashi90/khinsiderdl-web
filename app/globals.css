@@ -1434,7 +1434,7 @@ body {
   min-width: 0;
 }
 
-.track-list.is-virtualized .virtual-track-row:nth-child(even) .track-row {
+/* virtualized list selector removed in favor of a global nth-of-type rule */
 
 /* Always apply alternating color pattern to track rows, both virtualized and non-virtualized */
 .track-row:nth-of-type(even) {
