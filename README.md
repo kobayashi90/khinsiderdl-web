@@ -1,4 +1,4 @@
-A Video Game Music Streaming Web App.
+A Video Game Music Streaming Web App. 
 
 ## Install
 
@@ -29,7 +29,9 @@ npm run start
   - default: `./data/playlist-shares`
 
 ## Screenshots
-<img width="1919" height="907" alt="Screenshot 2025-12-18 062628" src="https://github.com/user-attachments/assets/f778c96c-782c-432b-9842-86a5f0ee345d" />
+<img width="1916" height="904" alt="image" src="https://github.com/user-attachments/assets/47ccf3b8-55a7-4a89-aa14-19532e6ab8ee" />
+
+
 
 
 
